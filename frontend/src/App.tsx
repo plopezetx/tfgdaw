@@ -3,13 +3,14 @@ import { FileExplorer } from "./components/FileExplorer";
 import { CodeEditor } from "./components/CodeEditor";
 import { PreviewPanel } from "./components/PreviewPanel";
 import { TerminalPanel } from "./components/TerminalPanel";
+import { WebContainerRunner } from "./components/WebContainerRunner";
 import { initialFiles } from "./data/initialFiles";
 import type { ProjectFile } from "./types/projects";
-import "./index.css";
 
 function App() {
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles);
   const [activeFilePath, setActiveFilePath] = useState<string>("/index.html");
+  const [refreshKey, setRefreshKey] = useState<number>(0);
   const [logs, setLogs] = useState<string[]>([
     "> Proyecto cargado correctamente",
     "> Preview inicial generada",
@@ -33,6 +34,8 @@ function App() {
   }
 
   function handleRunProject() {
+    setRefreshKey((currentKey) => currentKey + 1);
+
     setLogs((currentLogs) => [
       ...currentLogs,
       "> Ejecutando proyecto...",
@@ -45,7 +48,7 @@ function App() {
       <header className="topbar">
         <div>
           <strong>IDE Web Colaborativo</strong>
-          <span> Spike técnico Fase 1</span>
+          <span>Spike técnico Fase 1</span>
         </div>
 
         <button className="run-button" onClick={handleRunProject}>
@@ -63,10 +66,12 @@ function App() {
         <CodeEditor file={activeFile} onChange={handleChangeFileContent} />
 
         <div className="right-column">
-          <PreviewPanel files={files} />
+          <PreviewPanel files={files} refreshKey={refreshKey} />
           <TerminalPanel logs={logs} />
         </div>
       </div>
+
+      <WebContainerRunner />
     </main>
   );
 }
