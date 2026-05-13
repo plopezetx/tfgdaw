@@ -1,10 +1,19 @@
 import { useEffect, useRef, useState } from "react";
-import { WebContainer } from "@webcontainer/api";
-import { webcontainerProject } from "../data/webcontainerProject";
+import { WebContainer, type WebContainerProcess } from "@webcontainer/api";
+import type { ProjectFile } from "../types/projects";
+import { createRunnableFileSystemTree } from "../utils/projectToFileSystemTree";
 
-export function WebContainerRunner() {
+type WebContainerRunnerProps = {
+  files: ProjectFile[];
+  runKey: number;
+};
+
+export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
   const webcontainerRef = useRef<WebContainer | null>(null);
   const hasBootedRef = useRef(false);
+  const filesRef = useRef<ProjectFile[]>(files);
+  const currentRunRef = useRef(0);
+  const startProcessRef = useRef<WebContainerProcess | null>(null);
 
   const [status, setStatus] = useState("WebContainer sin iniciar");
   const [serverUrl, setServerUrl] = useState<string | null>(null);
@@ -15,37 +24,68 @@ export function WebContainerRunner() {
   }
 
   useEffect(() => {
-    async function bootWebContainer() {
-      if (hasBootedRef.current) return;
+    filesRef.current = files;
+  }, [files]);
+
+  useEffect(() => {
+    async function bootAndRunProject() {
+      const runId = currentRunRef.current + 1;
+      currentRunRef.current = runId;
 
       try {
-        hasBootedRef.current = true;
+        let webcontainer = webcontainerRef.current;
 
-        setStatus("Arrancando WebContainer...");
-        addLog("> Booting WebContainer");
+        if (!hasBootedRef.current) {
+          hasBootedRef.current = true;
 
-        const webcontainer = await WebContainer.boot();
-        webcontainerRef.current = webcontainer;
+          setStatus("Arrancando WebContainer...");
+          addLog("> Booting WebContainer");
+
+          webcontainer = await WebContainer.boot();
+          webcontainerRef.current = webcontainer;
+
+          webcontainer.on("server-ready", (_port, url) => {
+            setServerUrl(url);
+            setStatus("Servidor listo");
+            addLog(`> Server ready at ${url}`);
+          });
+        }
+
+        if (!webcontainer) {
+          return;
+        }
+
+        startProcessRef.current?.kill();
+        startProcessRef.current = null;
+        setServerUrl(null);
 
         setStatus("Montando archivos...");
-        addLog("> Mounting project files");
+        addLog("> Mounting editor files");
 
-        await webcontainer.mount(webcontainerProject);
+        await webcontainer.mount(createRunnableFileSystemTree(filesRef.current));
 
         setStatus("Instalando dependencias...");
         addLog("> npm install");
 
         const installProcess = await webcontainer.spawn("npm", ["install"]);
 
-        installProcess.output.pipeTo(
-          new WritableStream({
-            write(data) {
-              addLog(data);
-            },
-          })
-        );
+        installProcess.output
+          .pipeTo(
+            new WritableStream({
+              write(data) {
+                addLog(data);
+              },
+            })
+          )
+          .catch(() => {
+            addLog("> Install output stream closed");
+          });
 
         const installExitCode = await installProcess.exit;
+
+        if (currentRunRef.current !== runId) {
+          return;
+        }
 
         if (installExitCode !== 0) {
           setStatus("Error instalando dependencias");
@@ -56,21 +96,20 @@ export function WebContainerRunner() {
         setStatus("Arrancando servidor de desarrollo...");
         addLog("> npm run start");
 
-        webcontainer.on("server-ready", (_port, url) => {
-          setServerUrl(url);
-          setStatus("Servidor listo");
-          addLog(`> Server ready at ${url}`);
-        });
-
         const startProcess = await webcontainer.spawn("npm", ["run", "start"]);
+        startProcessRef.current = startProcess;
 
-        startProcess.output.pipeTo(
-          new WritableStream({
-            write(data) {
-              addLog(data);
-            },
-          })
-        );
+        startProcess.output
+          .pipeTo(
+            new WritableStream({
+              write(data) {
+                addLog(data);
+              },
+            })
+          )
+          .catch(() => {
+            addLog("> Runtime output stream closed");
+          });
       } catch (error) {
         console.error(error);
         setStatus("Error arrancando WebContainer");
@@ -78,8 +117,8 @@ export function WebContainerRunner() {
       }
     }
 
-    bootWebContainer();
-  }, []);
+    bootAndRunProject();
+  }, [runKey]);
 
   return (
     <section className="webcontainer-runner">

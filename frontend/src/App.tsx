@@ -71,7 +71,7 @@ function App() {
         </div>
       </div>
 
-      <WebContainerRunner />
+      <WebContainerRunner files={files} runKey={refreshKey} />
     </main>
   );
 }

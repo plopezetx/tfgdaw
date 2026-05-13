@@ -63,14 +63,17 @@ No se contempla inicialmente la ejecución generalista de cualquier lenguaje ni 
 
 La documentación principal se encuentra en la carpeta `/docs`:
 
-- `00-contexto.md`
+- `00-context.md`
 - `01-specs.md`
 - `02-roadmap.md`
 - `03-arquitectura.md`
 - `04-decisiones-tecnicas.md`
 - `05-riesgos.md`
 - `06-demo-tfg.md`
+- `07-continuacion-ia.md`
 
 ## Estado del proyecto
 
 Fase inicial de análisis, especificación y prototipado técnico.
+
+Último avance: se ha iniciado la conexión entre los archivos editados en Monaco y WebContainers mediante una utilidad que transforma `ProjectFile[]` en `FileSystemTree`.
