@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /c/Users/Usuario/Documents/TFG/TFG-DAW/tfgdaw/frontend && find . -type f \\\\\\( -name \"*.ts\" -o -name \"*.tsx\" -o -name \"*.js\" -o -name \"*.jsx\" \\\\\\) | head -50)",
+      "Read(//c/c/Users/Usuario/Documents/TFG/TFG-DAW/tfgdaw/**)",
+      "Bash(npm run *)",
+      "Bash(./node_modules/.bin/tsc -b --noEmit)",
+      "Bash(npm --prefix /c/Users/Usuario/Documents/TFG/TFG-DAW/tfgdaw/frontend install)",
+      "Bash(./node_modules/.bin/vite build *)"
+    ]
+  }
+}

@@ -1,57 +1,40 @@
 import { useMemo, useState } from "react";
 import { FileExplorer } from "./components/FileExplorer";
+import { EditorTabs } from "./components/EditorTabs";
 import { CodeEditor } from "./components/CodeEditor";
-import { PreviewPanel } from "./components/PreviewPanel";
+import { PreviewFrame } from "./components/PreviewFrame";
 import { TerminalPanel } from "./components/TerminalPanel";
-import { WebContainerRunner } from "./components/WebContainerRunner";
+import { useWebContainer } from "./hooks/useWebContainer";
 import { initialFiles } from "./data/initialFiles";
 import type { ProjectFile } from "./types/projects";
 
 function App() {
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles);
   const [activeFilePath, setActiveFilePath] = useState<string>("/index.html");
-  const [refreshKey, setRefreshKey] = useState<number>(0);
-  const [logs, setLogs] = useState<string[]>([
-    "> Proyecto cargado correctamente",
-    "> Preview inicial generada",
-  ]);
+  const [runKey, setRunKey] = useState(0);
 
-  const activeFile = useMemo(() => {
-    return files.find((file) => file.path === activeFilePath) ?? files[0];
-  }, [files, activeFilePath]);
+  const { status, serverUrl, logs } = useWebContainer(files, runKey);
+
+  const activeFile = useMemo(
+    () => files.find((f) => f.path === activeFilePath) ?? files[0],
+    [files, activeFilePath]
+  );
 
   function handleChangeFileContent(newContent: string) {
-    setFiles((currentFiles) =>
-      currentFiles.map((file) =>
-        file.path === activeFilePath
-          ? {
-              ...file,
-              content: newContent,
-            }
-          : file
+    setFiles((current) =>
+      current.map((f) =>
+        f.path === activeFilePath ? { ...f, content: newContent } : f
       )
     );
-  }
-
-  function handleRunProject() {
-    setRefreshKey((currentKey) => currentKey + 1);
-
-    setLogs((currentLogs) => [
-      ...currentLogs,
-      "> Ejecutando proyecto...",
-      "> Preview actualizada correctamente",
-    ]);
   }
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div>
-          <strong>IDE Web Colaborativo</strong>
-          <span>Spike técnico Fase 1</span>
+        <div className="topbar-title">
+          <strong>IDE Web</strong>
         </div>
-
-        <button className="run-button" onClick={handleRunProject}>
+        <button className="run-button" onClick={() => setRunKey((k) => k + 1)}>
           Ejecutar
         </button>
       </header>
@@ -63,15 +46,16 @@ function App() {
           onSelectFile={setActiveFilePath}
         />
 
-        <CodeEditor file={activeFile} onChange={handleChangeFileContent} />
+        <div className="editor-panel">
+          <EditorTabs activeFile={activeFile} />
+          <CodeEditor file={activeFile} onChange={handleChangeFileContent} />
+        </div>
 
         <div className="right-column">
-          <PreviewPanel files={files} refreshKey={refreshKey} />
+          <PreviewFrame serverUrl={serverUrl} status={status} />
           <TerminalPanel logs={logs} />
         </div>
       </div>
-
-      <WebContainerRunner files={files} runKey={refreshKey} />
     </main>
   );
 }

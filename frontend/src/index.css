@@ -13,14 +13,19 @@ button {
   font: inherit;
 }
 
+/* ─── Shell ─────────────────────────────────────────────────────────────── */
+
 .app-shell {
   height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
+/* ─── Topbar ─────────────────────────────────────────────────────────────── */
+
 .topbar {
   height: 56px;
+  flex-shrink: 0;
   border-bottom: 1px solid #1f2937;
   background: #020617;
   display: flex;
@@ -29,9 +34,10 @@ button {
   padding: 0 16px;
 }
 
-.topbar span {
-  color: #94a3b8;
-  margin-left: 8px;
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .run-button {
@@ -39,7 +45,7 @@ button {
   color: #052e16;
   border: 0;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   cursor: pointer;
   font-weight: 700;
 }
@@ -48,6 +54,8 @@ button {
   background: #16a34a;
 }
 
+/* ─── Workspace ──────────────────────────────────────────────────────────── */
+
 .workspace {
   flex: 1;
   min-height: 0;
@@ -55,20 +63,28 @@ button {
   grid-template-columns: 220px minmax(0, 1fr) 420px;
 }
 
+/* ─── File explorer ──────────────────────────────────────────────────────── */
+
 .file-explorer {
   border-right: 1px solid #1f2937;
   background: #020617;
   padding: 12px;
+  overflow-y: auto;
 }
 
 .panel-title {
   height: 32px;
   color: #94a3b8;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   border-bottom: 1px solid #1f2937;
   margin-bottom: 8px;
+  padding: 0 4px;
 }
 
 .file-button {
@@ -78,8 +94,9 @@ button {
   color: #cbd5e1;
   border: 0;
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px 8px;
   cursor: pointer;
+  font-size: 13px;
 }
 
 .file-button:hover {
@@ -91,6 +108,8 @@ button {
   color: white;
 }
 
+/* ─── Editor ─────────────────────────────────────────────────────────────── */
+
 .editor-panel {
   min-width: 0;
   min-height: 0;
@@ -99,30 +118,69 @@ button {
   background: #111827;
 }
 
-.editor-panel .panel-title {
-  padding-left: 12px;
-  margin-bottom: 0;
+.editor-tabs {
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  background: #020617;
+  border-bottom: 1px solid #1f2937;
+  padding: 0 4px;
+  overflow-x: auto;
 }
+
+.editor-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+  color: #94a3b8;
+  cursor: pointer;
+  border-radius: 6px 6px 0 0;
+  white-space: nowrap;
+}
+
+.editor-tab-active {
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  border-bottom-color: #111827;
+}
+
+/* ─── Right column ───────────────────────────────────────────────────────── */
 
 .right-column {
   min-height: 0;
   display: grid;
-  grid-template-rows: 1fr 180px;
+  grid-template-rows: 1fr 200px;
   border-left: 1px solid #1f2937;
 }
 
-.preview-panel,
-.terminal-panel {
+/* ─── Preview ────────────────────────────────────────────────────────────── */
+
+.preview-panel {
   min-height: 0;
   display: flex;
   flex-direction: column;
   background: #020617;
 }
 
-.preview-panel .panel-title,
-.terminal-panel .panel-title {
-  padding-left: 12px;
+.preview-panel .panel-title {
+  padding: 0 12px;
   margin-bottom: 0;
+}
+
+.preview-status {
+  font-size: 11px;
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .preview-frame {
@@ -132,8 +190,29 @@ button {
   background: white;
 }
 
+.preview-placeholder {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  color: #475569;
+  font-size: 13px;
+  text-align: center;
+  padding: 24px;
+}
+
+/* ─── Terminal ───────────────────────────────────────────────────────────── */
+
 .terminal-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #020617;
   border-top: 1px solid #1f2937;
+}
+
+.terminal-panel .panel-title {
+  padding: 0 12px;
+  margin-bottom: 0;
 }
 
 .terminal-content {
@@ -142,59 +221,6 @@ button {
   background: #020617;
   color: #22c55e;
   font-family: Consolas, Monaco, monospace;
-  font-size: 13px;
-  padding: 12px;
-}
-
-.webcontainer-runner {
-  border-top: 1px solid #1f2937;
-  background: #020617;
-  padding: 12px;
-  height: 520px;
-  display: grid;
-  grid-template-columns: 1fr 420px;
-  grid-template-rows: 32px 32px 1fr;
-  gap: 8px;
-}
-
-.webcontainer-runner .panel-title {
-  grid-column: 1 / -1;
-  margin-bottom: 0;
-}
-
-.webcontainer-status {
-  grid-column: 1 / -1;
-  color: #cbd5e1;
-  font-size: 14px;
-}
-
-.webcontainer-preview {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: white;
-  border-radius: 8px;
-}
-
-.webcontainer-placeholder {
-  display: grid;
-  place-items: center;
-  background: #111827;
-  color: #94a3b8;
-  border-radius: 8px;
-}
-
-.webcontainer-logs {
-  overflow: auto;
-  background: #030712;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.webcontainer-logs pre {
-  margin: 0 0 4px 0;
-  white-space: pre-wrap;
-  color: #22c55e;
-  font-family: Consolas, Monaco, monospace;
   font-size: 12px;
+  padding: 8px 12px;
 }

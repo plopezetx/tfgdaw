@@ -3,24 +3,26 @@ import { WebContainer, type WebContainerProcess } from "@webcontainer/api";
 import type { ProjectFile } from "../types/projects";
 import { createRunnableFileSystemTree } from "../utils/projectToFileSystemTree";
 
-type WebContainerRunnerProps = {
-  files: ProjectFile[];
-  runKey: number;
-};
-
-export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
+export function useWebContainer(
+  files: ProjectFile[],
+  runKey: number
+): {
+  status: string;
+  serverUrl: string | null;
+  logs: string[];
+} {
   const webcontainerRef = useRef<WebContainer | null>(null);
   const hasBootedRef = useRef(false);
   const filesRef = useRef<ProjectFile[]>(files);
   const currentRunRef = useRef(0);
   const startProcessRef = useRef<WebContainerProcess | null>(null);
 
-  const [status, setStatus] = useState("WebContainer sin iniciar");
+  const [status, setStatus] = useState("Esperando ejecución...");
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
   function addLog(message: string) {
-    setLogs((currentLogs) => [...currentLogs, message]);
+    setLogs((prev) => [...prev, message]);
   }
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
   }, [files]);
 
   useEffect(() => {
-    async function bootAndRunProject() {
+    async function bootAndRun() {
       const runId = currentRunRef.current + 1;
       currentRunRef.current = runId;
 
@@ -47,26 +49,22 @@ export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
           webcontainer.on("server-ready", (_port, url) => {
             setServerUrl(url);
             setStatus("Servidor listo");
-            addLog(`> Server ready at ${url}`);
+            addLog(`> Servidor listo en ${url}`);
           });
         }
 
-        if (!webcontainer) {
-          return;
-        }
+        if (!webcontainer) return;
 
         startProcessRef.current?.kill();
         startProcessRef.current = null;
         setServerUrl(null);
 
         setStatus("Montando archivos...");
-        addLog("> Mounting editor files");
-
+        addLog("> Montando archivos del editor");
         await webcontainer.mount(createRunnableFileSystemTree(filesRef.current));
 
         setStatus("Instalando dependencias...");
         addLog("> npm install");
-
         const installProcess = await webcontainer.spawn("npm", ["install"]);
 
         installProcess.output
@@ -78,24 +76,21 @@ export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
             })
           )
           .catch(() => {
-            addLog("> Install output stream closed");
+            addLog("> Stream de instalación cerrado");
           });
 
         const installExitCode = await installProcess.exit;
 
-        if (currentRunRef.current !== runId) {
-          return;
-        }
+        if (currentRunRef.current !== runId) return;
 
         if (installExitCode !== 0) {
           setStatus("Error instalando dependencias");
-          addLog(`> npm install failed with exit code ${installExitCode}`);
+          addLog(`> npm install falló (código ${installExitCode})`);
           return;
         }
 
         setStatus("Arrancando servidor de desarrollo...");
         addLog("> npm run start");
-
         const startProcess = await webcontainer.spawn("npm", ["run", "start"]);
         startProcessRef.current = startProcess;
 
@@ -108,43 +103,17 @@ export function WebContainerRunner({ files, runKey }: WebContainerRunnerProps) {
             })
           )
           .catch(() => {
-            addLog("> Runtime output stream closed");
+            addLog("> Stream del servidor cerrado");
           });
       } catch (error) {
         console.error(error);
-        setStatus("Error arrancando WebContainer");
+        setStatus("Error en WebContainer");
         addLog(`> Error: ${String(error)}`);
       }
     }
 
-    bootAndRunProject();
+    bootAndRun();
   }, [runKey]);
 
-  return (
-    <section className="webcontainer-runner">
-      <div className="panel-title">WebContainer real</div>
-
-      <div className="webcontainer-status">
-        <strong>Estado:</strong> {status}
-      </div>
-
-      {serverUrl ? (
-        <iframe
-          title="webcontainer-preview"
-          className="webcontainer-preview"
-          src={serverUrl}
-        />
-      ) : (
-        <div className="webcontainer-placeholder">
-          Esperando a que el servidor esté listo...
-        </div>
-      )}
-
-      <div className="webcontainer-logs">
-        {logs.map((log, index) => (
-          <pre key={index}>{log}</pre>
-        ))}
-      </div>
-    </section>
-  );
+  return { status, serverUrl, logs };
 }
