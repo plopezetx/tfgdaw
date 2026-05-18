@@ -40,6 +40,28 @@ button {
   gap: 10px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-button {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #1f2937;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.action-button:hover {
+  color: #e5e7eb;
+  border-color: #374151;
+}
+
 .run-button {
   background: #22c55e;
   color: #052e16;

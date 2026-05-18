@@ -1,183 +1,167 @@
 # 08 - Próximos pasos
 
-## Estado tras la limpieza de Fase 1
-
-El spike técnico ha sido refactorizado en una base limpia y extensible. El estado actual es:
-
-### Lo que funciona
-
-- Monaco Editor multiarchivo con selección de archivo activo.
-- Tab bar con el nombre del archivo abierto.
-- WebContainer se inicia al pulsar "Ejecutar".
-- Los archivos del editor se montan en el WebContainer.
-- `npm install` y `npm run start` (Vite) se ejecutan dentro del contenedor.
-- La preview real aparece en el iframe de la columna derecha una vez el servidor arranca.
-- Los logs de npm se muestran en el panel de terminal.
-
-### Arquitectura actual
+## Estructura actual del proyecto
 
 ```
-src/
-├── hooks/
-│   └── useWebContainer.ts    — lógica de boot/mount/install/start
-├── components/
-│   ├── FileExplorer.tsx       — sidebar con lista de archivos
-│   ├── EditorTabs.tsx         — barra de tabs del editor
-│   ├── CodeEditor.tsx         — wrapper de Monaco Editor
-│   ├── PreviewFrame.tsx       — iframe del servidor WebContainer
-│   └── TerminalPanel.tsx      — logs del WebContainer
-├── data/
-│   └── initialFiles.ts        — archivos de ejemplo en memoria
-├── types/
-│   └── projects.ts            — tipo ProjectFile
-├── utils/
-│   └── projectToFileSystemTree.ts — conversión a FileSystemTree
-└── App.tsx                    — estado global y layout principal
+tfgdaw/
+├── frontend/                  ← App React (Vite + TypeScript + Monaco + WebContainers)
+│   └── src/
+│       ├── hooks/
+│       │   └── useWebContainer.ts      ← lógica de boot/mount/install/start
+│       ├── components/
+│       │   ├── FileExplorer.tsx        ← sidebar de archivos
+│       │   ├── EditorTabs.tsx          ← barra de tab del archivo activo
+│       │   ├── CodeEditor.tsx          ← wrapper de Monaco Editor
+│       │   ├── PreviewFrame.tsx        ← iframe del servidor WebContainer
+│       │   └── TerminalPanel.tsx       ← logs del WebContainer
+│       ├── data/
+│       │   └── initialFiles.ts         ← archivos de ejemplo (HTML/JS/CSS)
+│       ├── types/
+│       │   └── projects.ts             ← tipo ProjectFile
+│       └── utils/
+│           ├── projectToFileSystemTree.ts ← convierte ProjectFile[] → FileSystemTree
+│           └── storage.ts              ← save/load/clear en localStorage
+├── backend/                   ← API Express (Node + TypeScript + Prisma)
+│   ├── src/
+│   │   ├── index.ts           ← entrada Express, CORS, rutas
+│   │   ├── lib/
+│   │   │   └── prisma.ts      ← singleton PrismaClient
+│   │   ├── middleware/
+│   │   │   └── requireAuth.ts ← verifica JWT, añade req.user
+│   │   └── routes/
+│   │       ├── auth.ts        ← register, login, logout (IMPLEMENTADO)
+│   │       └── projects.ts    ← CRUD proyectos + snapshot (IMPLEMENTADO)
+│   └── prisma/
+│       └── schema.prisma      ← modelos User, Project, ProjectSnapshot
+└── docs/                      ← documentación del proyecto
 ```
 
-### Limitaciones conocidas
-
-- Los archivos solo existen en memoria (se pierden al recargar la página).
-- No hay autenticación ni usuarios.
-- El árbol de archivos es una lista plana (no muestra carpetas anidadas).
-- Solo se puede abrir un archivo a la vez (no hay múltiples tabs abiertas).
-- WebContainers requiere Chrome o Edge modernos (no funciona en Firefox).
-- Cada vez que se pulsa "Ejecutar" se reinstalan todas las dependencias.
-
 ---
 
-## Fase 2 — Persistencia local
+## Comandos de desarrollo
 
-**Objetivo**: el usuario puede guardar su trabajo y recuperarlo al recargar la página.
+```bash
+# Frontend
+npm run dev              # arranca Vite en localhost:5173
+npm run build            # build de producción
 
-**Tareas**:
+# Backend
+npm run backend:dev      # arranca Express en localhost:3000 (requiere DB)
 
-1. Crear `src/utils/storage.ts` con dos funciones:
-   - `saveProjectToLocalStorage(files: ProjectFile[]): void`
-   - `loadProjectFromLocalStorage(): ProjectFile[] | null`
-2. En `App.tsx`, al inicializar el estado de `files`, intentar cargar desde `localStorage` primero.
-3. Añadir guardado automático en `handleChangeFileContent` (debounced, ~1 segundo).
-4. Añadir botón "Guardar" manual en la topbar (feedback visual breve).
-5. Añadir botón "Nuevo proyecto" que limpia el estado y el storage.
-6. Validar que al recargar la página el proyecto se recupera correctamente.
-
-**Criterio de salida**: el usuario edita código, recarga la página y sigue viendo sus cambios.
-
----
-
-## Fase 3 — Backend y base de datos
-
-**Objetivo**: proyectos guardados en servidor, con usuarios.
-
-**Stack**:
-- Node.js + Express + TypeScript
-- Prisma ORM
-- PostgreSQL
-
-**Estructura de carpetas**:
-```
-backend/
-├── src/
-│   ├── routes/
-│   │   ├── auth.ts
-│   │   └── projects.ts
-│   ├── middleware/
-│   │   └── auth.ts
-│   ├── prisma/
-│   │   └── schema.prisma
-│   └── index.ts
-├── package.json
-└── tsconfig.json
+# Instalar dependencias (si clonamos el repo)
+npm run install:frontend
+npm run install:backend
 ```
 
-**Tareas**:
+---
 
-1. Inicializar proyecto Node + TypeScript en `backend/`.
-2. Configurar Express con rutas básicas.
-3. Configurar Prisma con modelos `User`, `Project`, `ProjectSnapshot`.
-4. Implementar endpoints de autenticación:
-   - `POST /auth/register`
-   - `POST /auth/login`
-   - `POST /auth/logout`
-5. Implementar endpoints de proyectos:
-   - `GET /projects` (proyectos del usuario autenticado)
-   - `POST /projects`
-   - `GET /projects/:id`
-   - `PUT /projects/:id`
-   - `DELETE /projects/:id`
-6. Implementar endpoints de snapshot (estado de archivos):
-   - `PUT /projects/:id/snapshot`
-   - `GET /projects/:id/snapshot`
-7. Conectar el frontend con la API (reemplazar localStorage por llamadas fetch).
+## Estado por fases
 
-**Criterio de salida**: un usuario puede registrarse, crear un proyecto, guardar sus archivos en la BD y recuperarlos.
+### ✅ Fase 0 — Preparación inicial
+Completa. Repositorio, documentación base y decisiones técnicas.
+
+### ✅ Fase 1 — Spike técnico del IDE
+Completa. Monaco Editor + WebContainers integrados. Layout limpio: FileExplorer | Editor | Preview+Terminal en un único workspace.
+
+### ✅ Fase 2 — Persistencia local
+Completa. `frontend/src/utils/storage.ts` gestiona localStorage.
+
+- Los archivos se guardan automáticamente 1 segundo después del último cambio.
+- El botón "Guardar" guarda de inmediato y muestra "Guardado ✓" brevemente.
+- El botón "Nuevo" borra el storage y restaura los archivos iniciales (pide confirmación).
+- Al cargar la app, intenta recuperar el proyecto del localStorage antes de usar los archivos iniciales.
+
+**Limitación conocida**: si el usuario cambia de dispositivo o borra datos del navegador, pierde el trabajo. Eso se resuelve en Fase 3.
+
+### 🔶 Fase 3 — Backend y base de datos (estructura lista, lógica implementada, SIN conectar al frontend)
+
+El backend está creado y funciona en aislado. Falta:
+
+1. **Configurar PostgreSQL localmente** (o usar un servicio cloud como Supabase / Neon).
+2. **Crear el archivo `.env`** en `backend/` copiando `.env.example` y rellenando `DATABASE_URL` y `JWT_SECRET`.
+3. **Ejecutar la migración de Prisma**:
+   ```bash
+   cd backend
+   npx prisma migrate dev --name init
+   npx prisma generate
+   ```
+4. **Verificar que el backend arranca**:
+   ```bash
+   npm run backend:dev
+   # GET http://localhost:3000/health → { "status": "ok" }
+   ```
+5. **Conectar el frontend con la API** (ver sección siguiente).
+
+### ⬜ Fase 3 continuación — Conectar frontend con el backend
+
+Una vez el backend esté corriendo con BD:
+
+1. Crear `frontend/src/lib/api.ts` con funciones fetch tipadas:
+   - `register(email, username, password)`
+   - `login(email, password)` → devuelve token
+   - `getProjects()` → lista de proyectos
+   - `createProject(name)` → nuevo proyecto
+   - `saveSnapshot(projectId, files)`
+   - `loadSnapshot(projectId)` → `ProjectFile[]`
+
+2. Crear contexto de autenticación `frontend/src/context/AuthContext.tsx`:
+   - Guarda el token JWT en `localStorage`
+   - Expone `user`, `login()`, `logout()`
+
+3. Añadir React Router (`react-router-dom`):
+   - `/` → landing / login
+   - `/app` → IDE (requiere auth)
+   - `/projects` → lista de proyectos del usuario
+
+4. En el IDE, reemplazar `saveProject()` de `storage.ts` por `saveSnapshot()` de la API.
+
+5. En el IDE, reemplazar `loadProject()` de `storage.ts` por `loadSnapshot()` al abrir un proyecto.
+
+### ⬜ Fase 4 — IDE funcional completo
+
+- Árbol de archivos con carpetas anidadas (no lista plana).
+- Crear / renombrar / eliminar archivos desde el explorador.
+- Múltiples tabs abiertas simultáneamente.
+- Indicador de archivo modificado sin guardar (punto en la tab).
+- Optimización WebContainer: no reinstalar si `package.json` no cambia entre ejecuciones.
+- Botón de reset del runtime (matar servidor y volver a arrancar).
+- Pantalla de advertencia cuando el navegador no es compatible con WebContainers.
+
+### ⬜ Fase 5 — Publicación y comunidad
+
+- Campo `isPublic` en el modelo de proyecto (ya en el schema).
+- Endpoint `GET /gallery` (proyectos públicos paginados, sin `requireAuth`).
+- Vista de galería en el frontend.
+- Página pública de proyecto: `/p/:username/:slug` (solo lectura + ejecutar).
+- Fork/remix: `POST /projects/:id/fork` + guardar `forkedFromId`.
+
+### ⬜ Fase 6 — Asistente IA
+
+- Panel lateral de IA en el frontend.
+- Endpoint proxy en el backend: `POST /ai/chat` (oculta la API key de Claude).
+- Integrar Claude API (Sonnet) con prompt caching activado.
+- Enviar al modelo: archivo activo + selección del editor + mensaje del usuario.
+- Mostrar respuesta con markdown.
+- Si la respuesta incluye código, botón "Aplicar al editor".
+
+### ⬜ Fase 7 — Validación y demo
+
+- Probar los 5 escenarios de `docs/01-specs.md` de principio a fin.
+- Limpiar errores de TypeScript y ESLint.
+- Añadir mensajes de error comprensibles (no solo `console.error`).
+- Preparar script de instalación en `README.md`.
+- Grabar capturas para la memoria.
 
 ---
 
-## Fase 4 — IDE funcional completo
+## Próximo paso inmediato
 
-**Objetivo**: el editor es cómodo de usar en el día a día.
+El siguiente bloque de trabajo arranca con Fase 3 continuación:
 
-**Tareas**:
+1. Levantar PostgreSQL (local o cloud).
+2. Rellenar `.env` del backend.
+3. Ejecutar `prisma migrate dev`.
+4. Crear `frontend/src/lib/api.ts` y `frontend/src/context/AuthContext.tsx`.
+5. Añadir React Router y las rutas `/`, `/app`, `/projects`.
 
-1. Árbol de archivos con carpetas anidadas (no lista plana).
-2. Crear nuevo archivo (input en el explorador).
-3. Renombrar archivo (doble clic o menú contextual).
-4. Eliminar archivo (botón o menú contextual).
-5. Múltiples tabs abiertas simultáneamente (no solo una activa).
-6. Indicador visual de archivo modificado sin guardar (punto en la tab).
-7. Guardado automático configurable.
-8. Optimización de WebContainer: no reinstalar dependencias si `package.json` no ha cambiado.
-9. Botón de reset del runtime (matar el servidor y volver a arrancar).
-10. Pantalla de error clara cuando el navegador no es compatible con WebContainers.
-
----
-
-## Fase 5 — Publicación y comunidad
-
-**Objetivo**: compartir proyectos públicamente y reutilizarlos.
-
-**Tareas**:
-
-1. Añadir campo `isPublic` al modelo de proyecto.
-2. Crear endpoint `GET /gallery` (proyectos públicos paginados).
-3. Crear vista de galería en el frontend.
-4. Crear página pública de proyecto (`/p/:username/:projectSlug`).
-5. En la página pública: mostrar código (solo lectura) y ejecutar en WebContainer.
-6. Implementar fork/remix: `POST /projects/:id/fork`.
-7. Guardar relación `forkedFrom` entre proyectos.
-8. Diferenciar vista propietario (editar, publicar) vs. vista visitante (ver, forkear).
-
----
-
-## Fase 6 — Asistente IA
-
-**Objetivo**: ayuda contextual para el desarrollador dentro del IDE.
-
-**Tareas**:
-
-1. Crear panel lateral de IA en el frontend (colapsable).
-2. Crear endpoint proxy en el backend: `POST /ai/chat` (oculta la API key).
-3. Integrar Claude API (Sonnet) en el backend con prompt caching.
-4. En el frontend, enviar el archivo activo + selección del editor como contexto.
-5. Mostrar respuesta de la IA en el panel lateral con markdown.
-6. Si la respuesta incluye código, añadir botón "Aplicar al editor".
-7. Gestionar casos sin disponibilidad (rate limit, API key no configurada).
-
-**Referencia**: ver `docs/07-continuacion-ia.md` para el diseño detallado del módulo IA.
-
----
-
-## Fase 7 — Validación y demo
-
-**Objetivo**: el proyecto es demostrable sin intervención técnica.
-
-**Tareas**:
-
-1. Probar los 5 escenarios de `docs/01-specs.md` de principio a fin.
-2. Revisar y limpiar errores de TypeScript y ESLint.
-3. Añadir mensajes de error comprensibles para el usuario (no solo `console.error`).
-4. Revisar accesibilidad básica (roles ARIA, contraste de color).
-5. Preparar script de instalación y arranque local en `README.md`.
-6. Grabar capturas para la memoria del TFG.
-7. Preparar guion de demo (`docs/06-demo-tfg.md`).
+Con eso, el flujo completo de "registrarse → crear proyecto → editar → guardar en BD → recuperar" quedará cerrado.

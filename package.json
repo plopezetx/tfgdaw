@@ -7,6 +7,9 @@
     "build": "npm --prefix frontend run build",
     "lint": "npm --prefix frontend run lint",
     "preview": "npm --prefix frontend run preview",
-    "install:frontend": "npm --prefix frontend install"
+    "install:frontend": "npm --prefix frontend install",
+    "backend:dev": "npm --prefix backend run dev",
+    "backend:build": "npm --prefix backend run build",
+    "install:backend": "npm --prefix backend install"
   }
 }
