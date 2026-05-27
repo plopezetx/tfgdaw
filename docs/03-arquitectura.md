@@ -310,6 +310,15 @@ La ejecución principal se realizará en navegador mediante WebContainers para p
 
 La conversión y el paso de datos ya están implementados. Queda pendiente validar el comportamiento completo en Chrome/Edge, optimizar reinstalaciones y añadir reset explícito del runtime.
 
+Actualización 26/05/2026:
+
+- La lógica de runtime vive en `frontend/src/hooks/useWebContainer.ts`.
+- Existe botón de reset del runtime.
+- Se detecta compatibilidad básica con `crossOriginIsolated` y `SharedArrayBuffer`.
+- Se evita repetir `npm install` si el contenido de `package.json` no cambia.
+- El explorador permite crear, renombrar y eliminar archivos.
+- El backend añade endpoints públicos de galería, lectura por slug y fork.
+
 ## IA
 
 La IA se integrará como módulo independiente.

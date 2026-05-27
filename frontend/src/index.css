@@ -13,6 +13,11 @@ button {
   font: inherit;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* ─── Shell ─────────────────────────────────────────────────────────────── */
 
 .app-shell {
@@ -85,6 +90,14 @@ button {
   grid-template-columns: 220px minmax(0, 1fr) 420px;
 }
 
+.compatibility-warning {
+  border-bottom: 1px solid #92400e;
+  background: #451a03;
+  color: #fed7aa;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+
 /* ─── File explorer ──────────────────────────────────────────────────────── */
 
 .file-explorer {
@@ -92,6 +105,10 @@ button {
   background: #020617;
   padding: 12px;
   overflow-y: auto;
+}
+
+.explorer-title {
+  gap: 8px;
 }
 
 .panel-title {
@@ -109,6 +126,27 @@ button {
   padding: 0 4px;
 }
 
+.file-list {
+  display: grid;
+  gap: 4px;
+}
+
+.file-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.file-row:hover,
+.file-row-active {
+  background: #1e293b;
+}
+
+.file-row-active {
+  box-shadow: inset 3px 0 0 #2563eb;
+}
+
 .file-button {
   width: 100%;
   text-align: left;
@@ -119,15 +157,53 @@ button {
   padding: 6px 8px;
   cursor: pointer;
   font-size: 13px;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
 }
 
 .file-button:hover {
-  background: #1e293b;
+  color: white;
 }
 
-.file-button-active {
-  background: #1d4ed8;
+.file-name,
+.file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-path {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 2px;
+  padding-right: 4px;
+}
+
+.icon-action {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #1f2937;
+  border-radius: 5px;
+  background: #0f172a;
+  color: #cbd5e1;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.icon-action:hover {
+  border-color: #475569;
   color: white;
+}
+
+.danger-action:hover {
+  border-color: #ef4444;
+  color: #fecaca;
 }
 
 /* ─── Editor ─────────────────────────────────────────────────────────────── */
@@ -161,6 +237,8 @@ button {
   cursor: pointer;
   border-radius: 6px 6px 0 0;
   white-space: nowrap;
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .editor-tab-active {
@@ -168,6 +246,18 @@ button {
   color: #e5e7eb;
   border: 1px solid #1f2937;
   border-bottom-color: #111827;
+}
+
+.code-editor {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.code-editor .panel-title {
+  padding: 0 12px;
+  margin-bottom: 0;
 }
 
 /* ─── Right column ───────────────────────────────────────────────────────── */

@@ -156,6 +156,8 @@ Una vez el backend esté corriendo con BD:
 
 ## Próximo paso inmediato
 
+> Actualización 26/05/2026: el frontend ya incluye crear, renombrar y eliminar archivos, tabs reales, reset de runtime, aviso de compatibilidad y optimización para no reinstalar dependencias si `package.json` no cambia. El backend ya añade endpoints públicos de galería, lectura por slug y fork/remix. Queda conectar el frontend con la API real.
+
 El siguiente bloque de trabajo arranca con Fase 3 continuación:
 
 1. Levantar PostgreSQL (local o cloud).

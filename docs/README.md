@@ -77,3 +77,9 @@ La documentación principal se encuentra en la carpeta `/docs`:
 Fase inicial de análisis, especificación y prototipado técnico.
 
 Último avance: se ha iniciado la conexión entre los archivos editados en Monaco y WebContainers mediante una utilidad que transforma `ProjectFile[]` en `FileSystemTree`.
+
+## Estado actualizado 26/05/2026
+
+- Frontend IDE funcional con Monaco, WebContainers, preview, terminal, autosave local y gestión básica de archivos.
+- Backend inicial con auth, proyectos, snapshots, endpoints públicos y fork/remix.
+- Pendiente principal: conectar frontend con backend y preparar las vistas de login, proyectos, galería y proyecto público.

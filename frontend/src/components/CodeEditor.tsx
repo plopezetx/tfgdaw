@@ -8,7 +8,7 @@ type CodeEditorProps = {
 
 export function CodeEditor({ file, onChange }: CodeEditorProps) {
   return (
-    <section className="editor-panel">
+    <section className="code-editor">
       <div className="panel-title">{file.path}</div>
 
       <Editor

@@ -11,7 +11,7 @@ export function loadProject(): ProjectFile[] | null {
   if (!stored) return null;
   try {
     const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) return null;
+    if (!Array.isArray(parsed) || parsed.length === 0) return null;
     return parsed as ProjectFile[];
   } catch {
     return null;

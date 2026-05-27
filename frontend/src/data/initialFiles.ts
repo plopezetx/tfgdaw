@@ -10,11 +10,12 @@ export const initialFiles: ProjectFile[] = [
   <head>
     <meta charset="UTF-8" />
     <title>Proyecto TFG</title>
+    <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <div id="app">
       <h1>Hola desde el IDE Web</h1>
-      <p>Edita el código y pulsa ejecutar.</p>
+      <p>Edita el codigo y pulsa ejecutar.</p>
     </div>
 
     <script src="/src/main.js"></script>
@@ -28,10 +29,10 @@ export const initialFiles: ProjectFile[] = [
     content: `const app = document.querySelector("#app");
 
 const button = document.createElement("button");
-button.textContent = "Púlsame";
+button.textContent = "Pulsame";
 
 button.addEventListener("click", () => {
-  alert("El proyecto se está ejecutando desde el navegador");
+  alert("El proyecto se esta ejecutando desde el navegador");
 });
 
 app.appendChild(button);`,

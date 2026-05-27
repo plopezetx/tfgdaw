@@ -4,6 +4,63 @@ import { requireAuth } from "../middleware/requireAuth";
 
 const router = Router();
 
+function createSlug(name: string): string {
+  const baseSlug =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "proyecto";
+
+  return `${baseSlug}-${Date.now()}`;
+}
+
+// GET /projects/public/gallery - lista proyectos publicos
+router.get("/public/gallery", async (_req, res) => {
+  const projects = await prisma.project.findMany({
+    where: { isPublic: true },
+    orderBy: { updatedAt: "desc" },
+    take: 30,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      slug: true,
+      createdAt: true,
+      updatedAt: true,
+      owner: {
+        select: {
+          username: true,
+        },
+      },
+    },
+  });
+
+  res.json(projects);
+});
+
+// GET /projects/public/:slug - proyecto publico con snapshot
+router.get("/public/:slug", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { slug: req.params.slug, isPublic: true },
+    include: {
+      snapshot: true,
+      owner: {
+        select: {
+          id: true,
+          username: true,
+        },
+      },
+    },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  res.json(project);
+});
+
 router.use(requireAuth);
 
 // GET /projects — lista de proyectos del usuario autenticado
@@ -36,17 +93,11 @@ router.post("/", async (req, res) => {
     return;
   }
 
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-  const slug = `${baseSlug}-${Date.now()}`;
-
   const project = await prisma.project.create({
     data: {
       name,
       description,
-      slug,
+      slug: createSlug(name),
       ownerId: req.user!.id,
     },
   });
@@ -149,6 +200,46 @@ router.get("/:id/snapshot", async (req, res) => {
   }
 
   res.json(project.snapshot ?? { files: [] });
+});
+
+// POST /projects/:id/fork - crea una copia propia de un proyecto publico
+router.post("/:id/fork", async (req, res) => {
+  const sourceProject = await prisma.project.findFirst({
+    where: {
+      id: req.params.id,
+      isPublic: true,
+    },
+    include: {
+      snapshot: true,
+    },
+  });
+
+  if (!sourceProject) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  const forkedProject = await prisma.project.create({
+    data: {
+      name: `${sourceProject.name} (fork)`,
+      description: sourceProject.description,
+      slug: createSlug(`${sourceProject.name}-fork`),
+      ownerId: req.user!.id,
+      forkedFromId: sourceProject.id,
+      snapshot: sourceProject.snapshot
+        ? {
+            create: {
+              files: sourceProject.snapshot.files,
+            },
+          }
+        : undefined,
+    },
+    include: {
+      snapshot: true,
+    },
+  });
+
+  res.status(201).json(forkedProject);
 });
 
 export default router;

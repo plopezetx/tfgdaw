@@ -19,6 +19,11 @@ Actualmente ya se puede mostrar una primera demo técnica local con:
 - Prueba inicial de WebContainers.
 - Conversión de los archivos del editor a `FileSystemTree`.
 - Paso de los archivos editados al componente `WebContainerRunner`.
+- Crear, renombrar y eliminar archivos desde el explorador.
+- Tabs para cambiar entre archivos.
+- Reset del runtime.
+- Aviso si el navegador no soporta WebContainers.
+- Persistencia local con autosave.
 
 Esta demo todavía no representa el MVP completo, pero sirve para validar la dirección técnica del proyecto.
 

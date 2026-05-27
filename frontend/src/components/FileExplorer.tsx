@@ -4,30 +4,64 @@ type FileExplorerProps = {
   files: ProjectFile[];
   activeFilePath: string;
   onSelectFile: (path: string) => void;
+  onCreateFile: () => void;
+  onRenameFile: (path: string) => void;
+  onDeleteFile: (path: string) => void;
 };
 
 export function FileExplorer({
   files,
   activeFilePath,
   onSelectFile,
+  onCreateFile,
+  onRenameFile,
+  onDeleteFile,
 }: FileExplorerProps) {
+  const sortedFiles = [...files].sort((a, b) => a.path.localeCompare(b.path));
+
   return (
     <aside className="file-explorer">
-      <div className="panel-title">Archivos</div>
-
-      {files.map((file) => (
-        <button
-          key={file.path}
-          className={
-            file.path === activeFilePath
-              ? "file-button file-button-active"
-              : "file-button"
-          }
-          onClick={() => onSelectFile(file.path)}
-        >
-          {file.name}
+      <div className="panel-title explorer-title">
+        <span>Archivos</span>
+        <button className="icon-action" onClick={onCreateFile} title="Nuevo archivo">
+          +
         </button>
-      ))}
+      </div>
+
+      <div className="file-list">
+        {sortedFiles.map((file) => (
+          <div
+            key={file.path}
+            className={
+              file.path === activeFilePath
+                ? "file-row file-row-active"
+                : "file-row"
+            }
+          >
+            <button className="file-button" onClick={() => onSelectFile(file.path)}>
+              <span className="file-name">{file.name}</span>
+              <span className="file-path">{file.path}</span>
+            </button>
+
+            <div className="file-actions">
+              <button
+                className="icon-action"
+                onClick={() => onRenameFile(file.path)}
+                title="Renombrar"
+              >
+                R
+              </button>
+              <button
+                className="icon-action danger-action"
+                onClick={() => onDeleteFile(file.path)}
+                title="Eliminar"
+              >
+                x
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </aside>
   );
 }

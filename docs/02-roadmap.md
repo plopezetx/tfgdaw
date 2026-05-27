@@ -407,3 +407,32 @@ La conexión de datos entre Monaco y WebContainers ya está iniciada a nivel de 
 - Persona B: implementar fork/remix y preparar demo final con checklist.
 
 La IA queda como tarea de cierre si el flujo principal ya está estable. Como mínimo, conviene dejar un panel o endpoint preparado y documentar el resto como ampliación.
+
+## Actualización de avance - 26/05/2026
+
+### Estado actualizado por fases
+
+- Fase 1: completada a nivel de código. El editor se integra con WebContainers mediante `useWebContainer`.
+- Fase 2: completada. Existe persistencia local con `localStorage`, guardado manual y autosave.
+- Fase 3: backend inicial implementado. Hay autenticación, proyectos y snapshots, pero falta configurar BD real y conectar el frontend.
+- Fase 4: parcialmente completada. El IDE ya permite crear, renombrar y eliminar archivos, usar tabs, resetear runtime y detectar compatibilidad.
+- Fase 5: parcialmente iniciada en backend. Existen endpoints de galería pública, proyecto público por slug y fork/remix.
+- Fase 6: pendiente. La IA queda como ampliación o funcionalidad mínima si sobra tiempo.
+
+### Próxima prioridad real
+
+El siguiente objetivo debe ser cerrar el flujo:
+
+```txt
+registro/login -> crear proyecto -> editar -> guardar en backend -> recuperar -> publicar -> abrir público -> fork
+```
+
+### Tareas pendientes críticas
+
+- Instalar dependencias del backend en entorno local.
+- Configurar PostgreSQL y Prisma.
+- Conectar el frontend con la API.
+- Crear vistas mínimas de autenticación y proyectos.
+- Crear galería pública y vista pública.
+- Añadir fork desde la interfaz.
+- Preparar demo final y documentación de instalación.

@@ -19,6 +19,7 @@ frontend/.vite/
 # Logs
 *.log
 npm-debug.log*
+.npm-cache/
 
 # Sistema operativo
 .DS_Store
