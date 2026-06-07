@@ -4,9 +4,10 @@ import type { ProjectFile } from "../types/projects";
 type CodeEditorProps = {
   file: ProjectFile;
   onChange: (newContent: string) => void;
+  readOnly?: boolean;
 };
 
-export function CodeEditor({ file, onChange }: CodeEditorProps) {
+export function CodeEditor({ file, onChange, readOnly = false }: CodeEditorProps) {
   return (
     <section className="code-editor">
       <div className="panel-title">{file.path}</div>
@@ -22,6 +23,7 @@ export function CodeEditor({ file, onChange }: CodeEditorProps) {
           fontSize: 14,
           wordWrap: "on",
           automaticLayout: true,
+          readOnly,
         }}
       />
     </section>

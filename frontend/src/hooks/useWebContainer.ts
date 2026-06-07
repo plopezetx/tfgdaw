@@ -40,7 +40,8 @@ export function useWebContainer(
   const [logs, setLogs] = useState<string[]>([]);
 
   function addLog(message: string) {
-    setLogs((currentLogs) => [...currentLogs, message]);
+    const lines = message.split("\n").filter((l) => l.length > 0);
+    setLogs((currentLogs) => [...currentLogs, ...lines]);
   }
 
   useEffect(() => {

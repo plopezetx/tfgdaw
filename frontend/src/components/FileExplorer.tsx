@@ -4,9 +4,9 @@ type FileExplorerProps = {
   files: ProjectFile[];
   activeFilePath: string;
   onSelectFile: (path: string) => void;
-  onCreateFile: () => void;
-  onRenameFile: (path: string) => void;
-  onDeleteFile: (path: string) => void;
+  onCreateFile?: () => void;
+  onRenameFile?: (path: string) => void;
+  onDeleteFile?: (path: string) => void;
 };
 
 export function FileExplorer({
@@ -23,9 +23,11 @@ export function FileExplorer({
     <aside className="file-explorer">
       <div className="panel-title explorer-title">
         <span>Archivos</span>
-        <button className="icon-action" onClick={onCreateFile} title="Nuevo archivo">
-          +
-        </button>
+        {onCreateFile && (
+          <button className="icon-action" onClick={onCreateFile} title="Nuevo archivo">
+            +
+          </button>
+        )}
       </div>
 
       <div className="file-list">
@@ -43,22 +45,28 @@ export function FileExplorer({
               <span className="file-path">{file.path}</span>
             </button>
 
-            <div className="file-actions">
-              <button
-                className="icon-action"
-                onClick={() => onRenameFile(file.path)}
-                title="Renombrar"
-              >
-                R
-              </button>
-              <button
-                className="icon-action danger-action"
-                onClick={() => onDeleteFile(file.path)}
-                title="Eliminar"
-              >
-                x
-              </button>
-            </div>
+            {(onRenameFile || onDeleteFile) && (
+              <div className="file-actions">
+                {onRenameFile && (
+                  <button
+                    className="icon-action"
+                    onClick={() => onRenameFile(file.path)}
+                    title="Renombrar"
+                  >
+                    R
+                  </button>
+                )}
+                {onDeleteFile && (
+                  <button
+                    className="icon-action danger-action"
+                    onClick={() => onDeleteFile(file.path)}
+                    title="Eliminar"
+                  >
+                    x
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
