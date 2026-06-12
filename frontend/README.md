@@ -1,73 +1,73 @@
-# React + TypeScript + Vite
+# Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación React del IDE Web Colaborativo.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React
+- TypeScript
+- Vite
+- Monaco Editor
+- WebContainers
+- CSS propio
 
-## React Compiler
+## Funcionalidades
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Login y registro.
+- Dashboard de proyectos.
+- IDE multiarchivo.
+- Crear, renombrar y eliminar archivos.
+- Editor Monaco.
+- Preview con WebContainers.
+- Terminal/logs.
+- Guardado de snapshots en backend.
+- Publicación pública/privada.
+- Galería pública.
+- Vista pública de proyecto.
+- Fork/remix.
+- Panel IA conectado al backend.
 
-## Expanding the ESLint configuration
+## Desarrollo
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Desde la raíz del repositorio:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Desde esta carpeta:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+URL:
+
+```txt
+http://localhost:5173
+```
+
+## Variables De Entorno
+
+Opcionalmente puedes crear `frontend/.env.local`:
+
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+Si no se define, el frontend usa `http://localhost:3000`.
+
+## Comandos
+
+```bash
+npm run dev
+npm run build
+npm run lint
+npm run preview
+```
+
+## Compatibilidad
+
+La edición funciona en navegadores modernos, pero la ejecución completa con WebContainers requiere Chrome o Edge con cabeceras COOP/COEP activas.
+
+Vite ya configura estas cabeceras en `vite.config.ts` para desarrollo local.

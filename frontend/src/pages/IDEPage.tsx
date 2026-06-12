@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "../lib/router";
 import { FileExplorer } from "../components/FileExplorer";
 import { EditorTabs } from "../components/EditorTabs";
 import { CodeEditor } from "../components/CodeEditor";
@@ -30,7 +31,7 @@ export function IDEPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [togglingPublic, setTogglingPublic] = useState(false);
   const [bottomPanel, setBottomPanel] = useState<"terminal" | "ai">("terminal");
-  const [editorSelection, setEditorSelection] = useState<string>("");
+  const [editorSelection] = useState<string>("");
   const saveLabelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { status, serverUrl, logs, isCompatible } = useWebContainer(
@@ -125,14 +126,6 @@ export function IDEPage() {
     if (!projectSlug) return;
     const url = `${window.location.origin}/p/${projectSlug}`;
     navigator.clipboard.writeText(url).catch(() => {});
-  }
-
-  function handleNewProject() {
-    if (!confirm("Crear un nuevo proyecto? Se perderá el trabajo actual.")) return;
-
-    setFiles(initialFiles);
-    setActiveFilePath("/index.html");
-    setRunKey((current) => current + 1);
   }
 
   function handleCreateFile() {

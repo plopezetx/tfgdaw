@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "../lib/router";
 import { FileExplorer } from "../components/FileExplorer";
 import { EditorTabs } from "../components/EditorTabs";
 import { CodeEditor } from "../components/CodeEditor";
