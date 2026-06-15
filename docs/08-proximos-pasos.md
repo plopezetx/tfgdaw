@@ -135,11 +135,11 @@ Una vez el backend esté corriendo con BD:
 - Página pública de proyecto: `/p/:username/:slug` (solo lectura + ejecutar).
 - Fork/remix: `POST /projects/:id/fork` + guardar `forkedFromId`.
 
-### ⬜ Fase 6 — Asistente IA
+### ✅ Fase 6 — Asistente IA
 
 - Panel lateral de IA en el frontend.
-- Endpoint proxy en el backend: `POST /ai/chat` (oculta la API key de Claude).
-- Integrar Claude API (Sonnet) con prompt caching activado.
+- Endpoint proxy en el backend: `POST /ai/chat` (oculta la API key).
+- Integrar la API de Groq (`llama-3.3-70b-versatile`) con streaming SSE.
 - Enviar al modelo: archivo activo + selección del editor + mensaje del usuario.
 - Mostrar respuesta con markdown.
 - Si la respuesta incluye código, botón "Aplicar al editor".

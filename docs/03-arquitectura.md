@@ -27,17 +27,21 @@ Backend Express
   |-- Snapshots API
   |-- Public Gallery API
   |-- Fork API
-  |-- AI Proxy
+  |-- Likes API
+  |-- AI Proxy (Groq)
   |
   v
 PostgreSQL
   |-- users
-  |-- projects
+  |-- projects            (incluye visibility y views)
   |-- project_snapshots
-  |-- publications
-  |-- forks
-  |-- ai_interactions
+  |-- likes
 ```
+
+> Nota: la publicación se modela como el campo booleano `isPublic` del
+> proyecto y el fork como el campo `forkedFromId`, no como tablas aparte.
+> El esquema real (Prisma) tiene cuatro modelos: `User`, `Project`,
+> `ProjectSnapshot` y `Like`.
 
 ## Principio arquitectónico principal
 
@@ -319,18 +323,33 @@ Actualización 26/05/2026:
 - El explorador permite crear, renombrar y eliminar archivos.
 - El backend añade endpoints públicos de galería, lectura por slug y fork.
 
+Actualización 15/06/2026:
+
+- La instancia de WebContainer se mantiene a nivel de módulo y se reutiliza
+  entre montajes (evita el error "Only a single WebContainer instance can be
+  booted" al navegar entre páginas).
+- La preview se puede ampliar a pantalla completa.
+- El editor incorpora formateo con Prettier (carga diferida), vista previa de
+  Markdown, barra de estado y tamaño de fuente ajustable.
+- Se pueden importar archivos al proyecto y exportarlo como `.zip`.
+- Atajos de teclado (Ctrl+S, Ctrl+Enter) y aviso de cambios sin guardar.
+- Plantillas de inicio (Snake, login, lista de tareas).
+- Galería social: campo `views` en `Project` y modelo `Like`.
+
 ## IA
 
-La IA se integrará como módulo independiente.
+La IA se integra como módulo independiente. El proveedor es **Groq**
+(modelo `llama-3.3-70b-versatile`), elegido por tener un plan gratuito sin
+tarjeta y una API compatible con OpenAI, sencilla de integrar.
 
-### Flujo previsto
+### Flujo
 
 1. El usuario selecciona código o escribe una petición.
-2. El frontend envía la solicitud al backend.
-3. El backend llama al proveedor IA.
-4. El backend devuelve la respuesta.
-5. El frontend muestra la respuesta.
-6. Si hay cambios de código, el usuario decide si aplicarlos.
+2. El frontend envía la solicitud al backend (`POST /ai/chat`).
+3. El backend llama a la API de Groq con streaming.
+4. El backend reenvía la respuesta al frontend por SSE (`text/event-stream`).
+5. El frontend muestra la respuesta en el panel IA.
+6. Si la respuesta incluye código, el usuario decide si aplicarlo al editor.
 
 ## Seguridad
 

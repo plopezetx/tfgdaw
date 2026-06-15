@@ -15,6 +15,7 @@ model User {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   projects  Project[]
+  likes     Like[]
 }
 
 model Project {
@@ -23,12 +24,26 @@ model Project {
   description  String?
   isPublic     Boolean          @default(false)
   slug         String           @unique
+  views        Int              @default(0)
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   ownerId      String
   owner        User             @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   snapshot     ProjectSnapshot?
   forkedFromId String?
+  likes        Like[]
+}
+
+// Un "me gusta" de un usuario a un proyecto (único por par usuario+proyecto)
+model Like {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
 }
 
 // Guarda el estado de los archivos del proyecto como JSON

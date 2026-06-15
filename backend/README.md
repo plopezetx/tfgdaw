@@ -19,10 +19,11 @@ API Express del IDE Web Colaborativo.
 - CRUD de proyectos.
 - Guardado y recuperación de snapshots.
 - Publicación pública/privada.
-- Galería pública.
-- Lectura pública por slug.
+- Galería pública con contador de visitas y "me gusta".
+- Lectura pública por slug (suma una visita en cada apertura).
+- "Me gusta" en proyectos públicos (alternar y consultar estado).
 - Fork/remix de proyectos públicos.
-- Proxy IA por streaming SSE.
+- Proxy IA por streaming SSE (Groq).
 
 ## Configuración
 
@@ -108,6 +109,8 @@ curl http://localhost:3000/health
 - `GET /projects/public/gallery`
 - `GET /projects/public/:slug`
 - `POST /projects/:id/fork`
+- `GET /projects/:id/like-status`
+- `POST /projects/:id/like`
 
 ### IA
 

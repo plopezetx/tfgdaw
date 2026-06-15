@@ -8,24 +8,22 @@ La demo debe mostrar de forma clara el flujo principal de usuario: crear, editar
 
 ## Estado actual de la demo
 
-Actualmente ya se puede mostrar una primera demo técnica local con:
+Ya se puede mostrar el flujo completo del MVP de principio a fin:
 
-- Interfaz tipo IDE.
-- Árbol de archivos básico.
-- Editor Monaco.
-- Preview simple.
-- Panel de logs.
-- Botón de ejecución simulado.
-- Prueba inicial de WebContainers.
-- Conversión de los archivos del editor a `FileSystemTree`.
-- Paso de los archivos editados al componente `WebContainerRunner`.
-- Crear, renombrar y eliminar archivos desde el explorador.
-- Tabs para cambiar entre archivos.
-- Reset del runtime.
-- Aviso si el navegador no soporta WebContainers.
-- Persistencia local con autosave.
+- Registro e inicio de sesión.
+- Dashboard de proyectos con buscador, editar, duplicar y plantillas de inicio.
+- IDE con editor Monaco, árbol de archivos y tabs.
+- Crear, renombrar y eliminar archivos; importar archivos y exportar a `.zip`.
+- Formatear código, vista previa de Markdown y tamaño de fuente ajustable.
+- Ejecución real con WebContainers y preview (ampliable a pantalla completa).
+- Guardado en backend con autosave y atajos de teclado.
+- Publicación pública/privada y vista pública por slug.
+- Galería pública con buscador, visitas y "me gusta".
+- Fork/remix.
+- Asistente IA con respuesta en streaming y botón "Aplicar al editor".
 
-Esta demo todavía no representa el MVP completo, pero sirve para validar la dirección técnica del proyecto.
+La demo ya representa el MVP completo. El flujo principal está cerrado y
+funcionando.
 
 ## Demo técnica actual
 
@@ -37,13 +35,9 @@ Abrir el frontend en local mediante:
 npm run dev
 ```
 
-Este comando puede ejecutarse desde la raíz del repositorio:
-
-```txt
-C:\Users\pablo\Desktop\tfgdaw\tfgdaw
-```
-
-El `package.json` raíz delega automáticamente en la carpeta `frontend`.
+Este comando puede ejecutarse desde la raíz del repositorio (la carpeta
+`tfgdaw` clonada). El `package.json` raíz delega automáticamente en la carpeta
+`frontend`.
 
 Acceder a la URL generada por Vite, normalmente:
 

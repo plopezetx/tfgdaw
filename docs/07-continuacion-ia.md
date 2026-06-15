@@ -77,13 +77,7 @@ Todavía no implementada.
 
 ## Comandos de desarrollo
 
-Desde la raíz del repositorio:
-
-```txt
-C:\Users\pablo\Desktop\tfgdaw\tfgdaw
-```
-
-se puede ejecutar:
+Desde la raíz del repositorio (la carpeta `tfgdaw` clonada) se puede ejecutar:
 
 ```bash
 npm run dev

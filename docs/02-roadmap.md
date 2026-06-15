@@ -60,7 +60,7 @@ Preparar el repositorio, documentación y visión inicial del proyecto.
 
 ### Estado
 
-En progreso.
+Completada.
 
 ### Objetivo
 
@@ -104,7 +104,7 @@ La fase se considerará cerrada cuando:
 
 ### Estado
 
-Pendiente.
+Completada.
 
 ### Objetivo
 
@@ -127,7 +127,7 @@ El usuario puede editar un proyecto, guardarlo localmente, recargar la página y
 
 ### Estado
 
-Pendiente.
+Completada.
 
 ### Objetivo
 
@@ -177,7 +177,7 @@ Un usuario puede registrarse, iniciar sesión, crear un proyecto, guardarlo y re
 
 ### Estado
 
-Pendiente.
+Completada.
 
 ### Objetivo
 
@@ -207,7 +207,7 @@ El usuario puede trabajar con un proyecto pequeño de forma cómoda dentro del I
 
 ### Estado
 
-Pendiente.
+Completada.
 
 ### Objetivo
 
@@ -232,7 +232,7 @@ Un usuario puede publicar un proyecto, otra persona puede abrirlo y crear una co
 
 ### Estado
 
-Pendiente.
+Completada.
 
 ### Objetivo
 
@@ -436,3 +436,37 @@ registro/login -> crear proyecto -> editar -> guardar en backend -> recuperar ->
 - Crear galería pública y vista pública.
 - Añadir fork desde la interfaz.
 - Preparar demo final y documentación de instalación.
+
+## Actualización de avance - 15/06/2026
+
+### Estado actualizado por fases
+
+- Fase 0: completada.
+- Fase 1: completada.
+- Fase 2: completada.
+- Fase 3: completada. Backend Express + Prisma + PostgreSQL con autenticación
+  JWT, CRUD de proyectos y snapshots, y frontend conectado.
+- Fase 4: completada. IDE multiarchivo con crear/renombrar/eliminar, tabs,
+  reset de runtime y detección de compatibilidad.
+- Fase 5: completada. Galería pública, vista pública por slug, fork/remix y
+  toggle público/privado.
+- Fase 6: completada. Asistente IA con backend proxy a Groq y streaming SSE.
+- Fase 7 (validación): en curso.
+- Fase 8 (memoria y defensa): pendiente.
+
+### Funcionalidades añadidas más allá del MVP
+
+- Plantillas de inicio (Snake, login, lista de tareas).
+- Importar archivos y exportar el proyecto como `.zip`.
+- Editor: formatear con Prettier, vista previa de Markdown, barra de estado y
+  tamaño de fuente.
+- Atajos de teclado (Ctrl+S, Ctrl+Enter) y aviso de cambios sin guardar.
+- Editar, buscar y duplicar proyectos.
+- Preview ampliable a pantalla completa.
+- Galería social: contador de visitas y "me gusta" (modelo `Like` + campo
+  `views`).
+
+### Nota
+
+El flujo principal `registro/login -> crear -> editar -> guardar -> publicar
+-> abrir público -> fork` está cerrado y funcionando.

@@ -9,6 +9,7 @@ export function GalleryPage() {
   const [projects, setProjects] = useState<api.GalleryProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     api
@@ -18,6 +19,16 @@ export function GalleryPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const filteredProjects = projects.filter((project) => {
+    const term = search.trim().toLowerCase();
+    if (!term) return true;
+    return (
+      project.name.toLowerCase().includes(term) ||
+      (project.description ?? "").toLowerCase().includes(term) ||
+      project.owner.username.toLowerCase().includes(term)
+    );
+  });
+
   return (
     <main className="page-shell">
       <header className="page-header">
@@ -26,6 +37,15 @@ export function GalleryPage() {
           <p>Proyectos compartidos por la comunidad</p>
         </div>
         <div className="page-actions">
+          {projects.length > 0 && (
+            <input
+              className="search-input"
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar…"
+            />
+          )}
           {user ? (
             <button type="button" onClick={() => navigate("/projects")}>
               Mis proyectos
@@ -47,8 +67,14 @@ export function GalleryPage() {
         </div>
       )}
 
+      {!loading && projects.length > 0 && filteredProjects.length === 0 && (
+        <div className="card">
+          <p>No hay proyectos que coincidan con la búsqueda.</p>
+        </div>
+      )}
+
       <div className="gallery-grid">
-        {projects.map((project) => (
+        {filteredProjects.map((project) => (
           <div key={project.id} className="gallery-card">
             <div className="gallery-card-body">
               <strong>{project.name}</strong>
@@ -58,6 +84,10 @@ export function GalleryPage() {
                 {" · "}
                 {new Date(project.updatedAt).toLocaleDateString("es-ES")}
               </small>
+              <div className="stat-row">
+                <span className="stat" title="Visitas">👁 {project.views}</span>
+                <span className="stat" title="Me gusta">❤️ {project.likeCount}</span>
+              </div>
             </div>
             <div className="gallery-card-actions">
               <Link to={`/p/${project.slug}`}>Ver proyecto</Link>

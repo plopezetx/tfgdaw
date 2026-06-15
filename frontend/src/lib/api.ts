@@ -30,6 +30,8 @@ export type GalleryProject = {
   name: string;
   description: string | null;
   slug: string;
+  views: number;
+  likeCount: number;
   createdAt: string;
   updatedAt: string;
   owner: { username: string };
@@ -38,6 +40,13 @@ export type GalleryProject = {
 export type PublicProjectDetail = ProjectSummary & {
   snapshot: { files: ProjectFile[] } | null;
   owner: { id: string; username: string };
+  views: number;
+  likeCount: number;
+};
+
+export type LikeStatus = {
+  liked: boolean;
+  likeCount: number;
 };
 
 export function setAuthToken(token: string | null) {
@@ -144,6 +153,16 @@ export async function getPublicProject(slug: string): Promise<PublicProjectDetai
 
 export async function forkProject(projectId: string): Promise<ProjectSummary> {
   return request<ProjectSummary>(`/projects/${projectId}/fork`, {
+    method: "POST",
+  });
+}
+
+export async function getLikeStatus(projectId: string): Promise<LikeStatus> {
+  return request<LikeStatus>(`/projects/${projectId}/like-status`);
+}
+
+export async function toggleLike(projectId: string): Promise<LikeStatus> {
+  return request<LikeStatus>(`/projects/${projectId}/like`, {
     method: "POST",
   });
 }

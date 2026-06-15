@@ -6,17 +6,21 @@ La aplicación permite crear, editar, ejecutar, guardar, publicar y reutilizar p
 
 ## Estado Actual
 
-El proyecto está en una versión funcional de MVP:
+El proyecto está en una versión funcional y ampliada:
 
 - Frontend React + TypeScript + Vite.
-- Editor Monaco integrado.
+- Editor Monaco con formateo (Prettier), vista previa de Markdown, barra de estado y tamaño de fuente ajustable.
 - Gestión multiarchivo: crear, renombrar y eliminar archivos.
-- Ejecución en navegador con WebContainers.
-- Preview embebida y terminal/logs.
-- Autenticación mediante backend Express.
-- CRUD de proyectos y snapshots con Prisma.
-- Galería pública, vista pública y fork/remix.
-- Panel IA mediante backend proxy.
+- Importar archivos al proyecto y exportar el proyecto completo como `.zip`.
+- Ejecución en navegador con WebContainers, con preview ampliable a pantalla completa.
+- Preview embebida y terminal/logs (con limpieza de códigos ANSI).
+- Plantillas de inicio (juego Snake, página de login y lista de tareas).
+- Autenticación mediante backend Express con JWT.
+- CRUD de proyectos y snapshots con Prisma, autoguardado y atajos de teclado (Ctrl+S, Ctrl+Enter).
+- Editar, buscar y duplicar proyectos desde el panel "Mis proyectos".
+- Galería pública con buscador, vista pública y fork/remix.
+- Galería social: contador de visitas y "me gusta" en proyectos públicos.
+- Panel IA mediante backend proxy (Groq, streaming SSE).
 
 Pendiente principal para despliegue real: configurar PostgreSQL, variables de entorno y migraciones de Prisma.
 

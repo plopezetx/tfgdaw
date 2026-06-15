@@ -8,18 +8,23 @@ La plataforma permite crear, editar, ejecutar, guardar, publicar y reutilizar pr
 
 ## Estado Actual
 
-Versión funcional de MVP:
+Versión funcional y ampliada:
 
 - Frontend con React, TypeScript, Vite, Monaco y WebContainers.
 - Backend con Express, Prisma, PostgreSQL y JWT.
 - Gestión de usuarios.
-- Gestión de proyectos.
-- Snapshots de archivos.
+- Gestión de proyectos: crear, editar metadatos, buscar y duplicar.
+- Plantillas de inicio (Snake, login, lista de tareas).
+- Editor con formateo (Prettier), vista previa de Markdown, barra de estado y tamaño de fuente.
+- Importar archivos y exportar el proyecto como `.zip`.
+- Snapshots de archivos con autoguardado y atajos de teclado.
+- Ejecución con WebContainers y preview ampliable a pantalla completa.
 - Publicación pública/privada.
-- Galería pública.
+- Galería pública con buscador.
 - Vista pública de proyecto.
+- Galería social: visitas y "me gusta".
 - Fork/remix.
-- Panel IA mediante backend proxy.
+- Panel IA mediante backend proxy (Groq, streaming SSE).
 
 Queda como condición de despliegue configurar base de datos, variables de entorno y migraciones.
 

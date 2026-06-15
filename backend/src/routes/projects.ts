@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { Prisma } from "@prisma/client";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/requireAuth";
 
@@ -25,6 +26,7 @@ router.get("/public/gallery", async (_req, res) => {
       name: true,
       description: true,
       slug: true,
+      views: true,
       createdAt: true,
       updatedAt: true,
       owner: {
@@ -32,10 +34,19 @@ router.get("/public/gallery", async (_req, res) => {
           username: true,
         },
       },
+      _count: {
+        select: { likes: true },
+      },
     },
   });
 
-  res.json(projects);
+  // Aplanamos el contador de likes para el frontend
+  res.json(
+    projects.map((project) => ({
+      ...project,
+      likeCount: project._count.likes,
+    }))
+  );
 });
 
 // GET /projects/public/:slug - proyecto publico con snapshot
@@ -50,6 +61,9 @@ router.get("/public/:slug", async (req, res) => {
           username: true,
         },
       },
+      _count: {
+        select: { likes: true },
+      },
     },
   });
 
@@ -58,7 +72,17 @@ router.get("/public/:slug", async (req, res) => {
     return;
   }
 
-  res.json(project);
+  // Cada visita a la pagina publica suma una vista
+  await prisma.project.update({
+    where: { id: project.id },
+    data: { views: { increment: 1 } },
+  });
+
+  res.json({
+    ...project,
+    views: project.views + 1,
+    likeCount: project._count.likes,
+  });
 });
 
 router.use(requireAuth);
@@ -229,7 +253,7 @@ router.post("/:id/fork", async (req, res) => {
       snapshot: sourceProject.snapshot
         ? {
             create: {
-              files: sourceProject.snapshot.files,
+              files: sourceProject.snapshot.files as Prisma.InputJsonValue,
             },
           }
         : undefined,
@@ -240,6 +264,53 @@ router.post("/:id/fork", async (req, res) => {
   });
 
   res.status(201).json(forkedProject);
+});
+
+// GET /projects/:id/like-status - saber si el usuario ha dado like y total
+router.get("/:id/like-status", async (req, res) => {
+  const liked = await prisma.like.findUnique({
+    where: {
+      userId_projectId: { userId: req.user!.id, projectId: req.params.id },
+    },
+  });
+
+  const likeCount = await prisma.like.count({
+    where: { projectId: req.params.id },
+  });
+
+  res.json({ liked: Boolean(liked), likeCount });
+});
+
+// POST /projects/:id/like - alterna el "me gusta" del usuario en un proyecto publico
+router.post("/:id/like", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, isPublic: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  const existing = await prisma.like.findUnique({
+    where: {
+      userId_projectId: { userId: req.user!.id, projectId: project.id },
+    },
+  });
+
+  if (existing) {
+    await prisma.like.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.like.create({
+      data: { userId: req.user!.id, projectId: project.id },
+    });
+  }
+
+  const likeCount = await prisma.like.count({
+    where: { projectId: project.id },
+  });
+
+  res.json({ liked: !existing, likeCount });
 });
 
 export default router;

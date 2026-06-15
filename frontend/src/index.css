@@ -2,11 +2,16 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background: #0f172a;
   color: #e5e7eb;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Segoe UI", system-ui, Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 button {
@@ -16,6 +21,31 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ─── Animaciones reutilizables ──────────────────────────────────────────── */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 
 /* ─── Auth page ──────────────────────────────────────────────────────────── */
@@ -260,6 +290,7 @@ button:disabled {
 }
 
 .project-card {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -268,6 +299,12 @@ button:disabled {
   border-radius: 8px;
   padding: 14px 16px;
   gap: 12px;
+}
+
+/* Eleva la tarjeta cuyo menú está abierto para que el desplegable no quede
+   tapado por la tarjeta siguiente */
+.project-card--menu-open {
+  z-index: 30;
 }
 
 .project-card strong {
@@ -349,6 +386,71 @@ button:disabled {
   border-color: #991b1b;
 }
 
+/* ─── Menú de acciones (⋯) de la tarjeta de proyecto ─────────────────────── */
+
+.card-menu {
+  position: relative;
+}
+
+.card-menu-trigger {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.card-menu-trigger:hover {
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+.card-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 150px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  animation: fadeInUp 0.15s ease-out both;
+}
+
+.card-menu-dropdown button {
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: #cbd5e1;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.card-menu-dropdown button:hover:not(:disabled) {
+  background: #0f172a;
+  color: white;
+}
+
+.card-menu-danger {
+  color: #f87171 !important;
+}
+
+.card-menu-danger:hover:not(:disabled) {
+  background: #450a0a !important;
+  color: #fecaca !important;
+}
+
 .page-action-link {
   background: transparent;
   color: #94a3b8;
@@ -362,6 +464,55 @@ button:disabled {
 .page-action-link:hover {
   color: #e5e7eb;
   border-color: #374151;
+}
+
+/* ─── Plantillas ─────────────────────────────────────────────────────────── */
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 16px;
+  cursor: pointer;
+  color: inherit;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.template-card:hover:not(:disabled) {
+  border-color: #2563eb;
+  transform: translateY(-2px);
+}
+
+.template-icon {
+  font-size: 28px;
+}
+
+.template-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.template-desc {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.template-loading {
+  font-size: 12px;
+  color: #3b82f6;
+  font-weight: 600;
 }
 
 /* ─── Gallery ────────────────────────────────────────────────────────────── */
@@ -439,6 +590,7 @@ button:disabled {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 /* ─── Topbar ─────────────────────────────────────────────────────────────── */
@@ -507,8 +659,10 @@ button:disabled {
 .workspace {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr) 420px;
+  overflow: hidden;
 }
 
 .compatibility-warning {
@@ -681,13 +835,153 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.code-editor-bar {
+  gap: 10px;
+}
+
+.code-editor-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-editor-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.mini-button {
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 2px 10px;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mini-button:hover:not(:disabled) {
+  color: white;
+  border-color: #475569;
+}
+
+.mini-button--active {
+  background: #052e16;
+  border-color: #166534;
+  color: #22c55e;
+}
+
+.code-editor-status {
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px;
+  background: #020617;
+  border-top: 1px solid #1f2937;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.code-editor-status > span:first-child {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+}
+
+.font-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.font-size-label {
+  min-width: 34px;
+  text-align: center;
+}
+
+.code-editor-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Vista previa de Markdown */
+.markdown-preview {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 28px;
+  background: #0f172a;
+  color: #e5e7eb;
+  line-height: 1.6;
+}
+
+.markdown-preview h1,
+.markdown-preview h2,
+.markdown-preview h3 {
+  color: #f1f5f9;
+  border-bottom: 1px solid #1f2937;
+  padding-bottom: 6px;
+}
+
+.markdown-preview a { color: #60a5fa; }
+
+.markdown-preview code {
+  background: #1e293b;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.markdown-preview pre {
+  background: #020617;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 14px;
+  overflow-x: auto;
+}
+
+.markdown-preview pre code {
+  background: none;
+  padding: 0;
+}
+
+.markdown-preview blockquote {
+  border-left: 3px solid #334155;
+  margin: 0;
+  padding-left: 14px;
+  color: #94a3b8;
+}
+
+.markdown-preview img {
+  max-width: 100%;
+}
+
 /* ─── Right column ───────────────────────────────────────────────────────── */
 
 .right-column {
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-rows: 1fr 200px;
+  grid-template-rows: 1fr 240px;
   border-left: 1px solid #1f2937;
+  overflow: hidden;
+}
+
+.bottom-area {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 /* ─── Preview ────────────────────────────────────────────────────────────── */
@@ -704,6 +998,12 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.preview-title-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .preview-status {
   font-size: 11px;
   color: #64748b;
@@ -713,7 +1013,78 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
+  max-width: 160px;
+}
+
+.preview-expand {
+  background: #1e293b;
+  color: #cbd5e1;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.preview-expand:hover {
+  color: white;
+  border-color: #475569;
+}
+
+/* Modo pantalla completa: la preview ocupa toda la ventana por encima de todo */
+.preview-panel--expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #020617;
+  animation: preview-zoom 0.2s ease-out;
+}
+
+@keyframes preview-zoom {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.preview-toolbar {
+  position: absolute;
+  top: 44px;
+  right: 16px;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+}
+
+.preview-run,
+.preview-close {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.preview-run {
+  background: #22c55e;
+  color: #052e16;
+}
+
+.preview-run:hover {
+  background: #16a34a;
+}
+
+.preview-close {
+  background: #1e293b;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+.preview-close:hover {
+  background: #334155;
 }
 
 .preview-frame {
@@ -736,11 +1107,14 @@ button:disabled {
 /* ─── Terminal ───────────────────────────────────────────────────────────── */
 
 .terminal-panel {
+  flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: #020617;
   border-top: 1px solid #1f2937;
+  overflow: hidden;
 }
 
 .terminal-panel .panel-title {
@@ -750,32 +1124,39 @@ button:disabled {
 
 .terminal-content {
   flex: 1;
+  min-height: 0;
   overflow: auto;
   background: #020617;
   color: #22c55e;
   font-family: Consolas, Monaco, monospace;
   font-size: 12px;
   padding: 8px 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* ─── Bottom panel tabs ──────────────────────────────────────────────────── */
 
 .bottom-panel-tabs {
   display: flex;
-  gap: 2px;
-  padding: 4px 8px 0;
-  background: #1e293b;
+  gap: 4px;
+  padding: 0 8px;
+  height: 34px;
+  align-items: flex-end;
+  background: #020617;
   border-top: 1px solid #1f2937;
+  border-bottom: 1px solid #1f2937;
 }
 
 .panel-tab {
-  padding: 4px 12px;
-  background: none;
+  padding: 0 14px;
+  height: 26px;
+  background: transparent;
   border: 1px solid transparent;
-  border-bottom: none;
-  border-radius: 4px 4px 0 0;
+  border-radius: 6px 6px 0 0;
   color: #94a3b8;
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -787,13 +1168,16 @@ button:disabled {
   color: #e5e7eb;
   background: #0f172a;
   border-color: #1f2937;
+  border-bottom-color: #0f172a;
+  margin-bottom: -1px;
 }
 
 /* ─── AI Panel ───────────────────────────────────────────────────────────── */
 
 .ai-panel {
-  flex: 0 0 180px;
+  flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background: #0f172a;
@@ -882,4 +1266,234 @@ button:disabled {
 
 .ai-textarea:disabled {
   opacity: 0.6;
+}
+
+/* ─── Pulido visual y animaciones ────────────────────────────────────────── */
+
+/* Entrada suave de tarjetas y paneles principales */
+.auth-card,
+.card,
+.gallery-card,
+.project-card {
+  animation: fadeInUp 0.4s ease-out both;
+}
+
+/* Escalonado en las rejillas para un efecto en cascada */
+.template-grid .template-card { animation: fadeInUp 0.4s ease-out both; }
+.template-grid .template-card:nth-child(2) { animation-delay: 0.07s; }
+.template-grid .template-card:nth-child(3) { animation-delay: 0.14s; }
+
+.gallery-grid .gallery-card:nth-child(2) { animation-delay: 0.06s; }
+.gallery-grid .gallery-card:nth-child(3) { animation-delay: 0.12s; }
+.gallery-grid .gallery-card:nth-child(4) { animation-delay: 0.18s; }
+
+.project-list .project-card:nth-child(2) { animation-delay: 0.05s; }
+.project-list .project-card:nth-child(3) { animation-delay: 0.1s; }
+.project-list .project-card:nth-child(4) { animation-delay: 0.15s; }
+
+/* Transiciones suaves en todos los controles */
+.action-button,
+.run-button,
+.page-actions button,
+.project-form button,
+.auth-card button[type="submit"],
+.visibility-toggle,
+.delete-button,
+.page-action-link,
+.project-card-actions a,
+.gallery-card-actions a {
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease,
+    transform 0.12s ease, box-shadow 0.2s ease;
+}
+
+/* Hundir ligeramente al pulsar */
+.action-button:active,
+.run-button:active,
+.project-form button:active,
+.auth-card button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+/* Botones primarios con degradado moderno */
+.project-form button,
+.auth-card button[type="submit"] {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+}
+
+.project-form button:hover,
+.auth-card button[type="submit"]:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+/* Botón ejecutar con degradado y brillo verde */
+.run-button {
+  background: linear-gradient(135deg, #34d399, #22c55e);
+  box-shadow: 0 3px 14px rgba(34, 197, 94, 0.3);
+}
+
+.run-button:hover {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 5px 20px rgba(34, 197, 94, 0.45);
+}
+
+/* Enlaces de acción en tarjetas: leve elevación al pasar */
+.project-card-actions a:hover,
+.gallery-card-actions a:hover {
+  transform: translateY(-1px);
+}
+
+/* Tarjetas con elevación al pasar el ratón */
+.gallery-card,
+.project-card {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.2s ease;
+}
+
+.gallery-card:hover,
+.project-card:hover {
+  transform: translateY(-3px);
+  border-color: #334155;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+/* Títulos con degradado sutil */
+.page-header h1,
+.auth-card h1 {
+  background: linear-gradient(90deg, #f1f5f9, #93c5fd);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Fondo con degradado suave en páginas de pantalla completa */
+.auth-page,
+.page-shell {
+  background: linear-gradient(160deg, #0f172a 0%, #111827 60%, #0b1220 100%);
+}
+
+/* Foco accesible y moderno en campos de texto */
+.auth-card input:focus,
+.project-form input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+/* Indicador de carga reutilizable (por si se usa en markup) */
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #334155;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+/* ─── Nombre editable del IDE y estado sin guardar ───────────────────────── */
+
+.topbar-name {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 6px;
+  transition: background 0.15s;
+}
+
+.topbar-name:hover {
+  background: #1e293b;
+}
+
+.topbar-name-input {
+  background: #0f172a;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  color: #f1f5f9;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 3px 8px;
+  outline: none;
+  min-width: 180px;
+}
+
+.dirty-dot {
+  color: #fbbf24;
+  font-size: 12px;
+  margin-left: 6px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* ─── Buscador y cabecera de sección ─────────────────────────────────────── */
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  margin: 0;
+}
+
+.search-input {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 7px 12px;
+  color: #e5e7eb;
+  font-size: 13px;
+  outline: none;
+  min-width: 180px;
+  transition: border-color 0.15s, box-shadow 0.2s;
+}
+
+.search-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* ─── Estadísticas (visitas / likes) ─────────────────────────────────────── */
+
+.stat-row {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.stat {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ─── Botón de me gusta ──────────────────────────────────────────────────── */
+
+.like-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1e293b;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.like-button:hover:not(:disabled) {
+  border-color: #475569;
+  transform: translateY(-1px);
+}
+
+.like-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.like-button--active {
+  background: #450a0a;
+  border-color: #b91c1c;
+  color: #fecaca;
 }

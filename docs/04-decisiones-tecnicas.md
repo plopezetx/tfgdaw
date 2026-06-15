@@ -303,7 +303,7 @@ Se guardará el estado del proyecto como **snapshot JSON**.
 
 ### Estado
 
-Prevista.
+Aceptada e implementada.
 
 ### Contexto
 
@@ -318,19 +318,26 @@ La IA aporta valor, pero no debe bloquear el MVP.
 
 ### Decisión
 
-Se implementará, si el calendario lo permite, una capa IA mediante backend proxy.
+Se implementa una capa IA mediante backend proxy (`POST /ai/chat`) con
+streaming SSE. El proveedor elegido es **Groq** (`llama-3.3-70b-versatile`).
+
+Inicialmente se prototipó con la API de Anthropic (Claude), pero se cambió a
+Groq porque su plan gratuito no requiere tarjeta y su API es compatible con
+OpenAI, lo que mantiene el coste a cero para un TFG sin reescribir la lógica.
 
 ### Motivos
 
-- Evita exponer API keys.
-- Permite cambiar de proveedor.
+- Evita exponer API keys (la clave vive solo en el backend).
+- El proxy permite cambiar de proveedor sin tocar el frontend (se aprovechó
+  al migrar de Anthropic a Groq).
 - Mantiene la IA desacoplada del núcleo del IDE.
-- Permite limitar costes.
+- Plan gratuito de Groq: limita costes a cero.
 
 ### Consecuencias
 
-- Será necesario crear endpoints específicos.
-- Las acciones IA deberán ser manuales y controladas.
+- Fue necesario crear endpoints específicos y manejar el streaming SSE.
+- Las acciones IA son manuales y controladas (botón "Aplicar al editor").
+- La clave se configura como `GROQ_API_KEY` en `backend/.env`.
 
 ## Decisión 11 - Colaboración como publicación y fork
 

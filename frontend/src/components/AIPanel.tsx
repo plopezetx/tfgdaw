@@ -92,8 +92,6 @@ export function AIPanel({ fileContent, fileName, selection, onApplyCode }: AIPan
 
   return (
     <section className="ai-panel">
-      <div className="panel-title">IA Asistente</div>
-
       <div className="ai-messages">
         {messages.length === 0 && (
           <p className="ai-hint">

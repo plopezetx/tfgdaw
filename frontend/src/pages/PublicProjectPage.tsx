@@ -23,6 +23,9 @@ export function PublicProjectPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [forking, setForking] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liking, setLiking] = useState(false);
 
   const { status, serverUrl, logs, isCompatible } = useWebContainer(files, runKey, 0);
 
@@ -33,13 +36,44 @@ export function PublicProjectPage() {
       .getPublicProject(slug)
       .then((p) => {
         setProject(p);
+        setLikeCount(p.likeCount);
         const projectFiles = p.snapshot?.files ?? [];
         setFiles(projectFiles);
         setActiveFilePath(projectFiles[0]?.path ?? "");
+
+        // Si hay sesión, comprobamos si el usuario ya le dio like
+        if (user) {
+          api
+            .getLikeStatus(p.id)
+            .then((s) => {
+              setLiked(s.liked);
+              setLikeCount(s.likeCount);
+            })
+            .catch(() => {});
+        }
       })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
-  }, [slug]);
+  }, [slug, user]);
+
+  async function handleLike() {
+    if (!project) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    setLiking(true);
+    try {
+      const result = await api.toggleLike(project.id);
+      setLiked(result.liked);
+      setLikeCount(result.likeCount);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLiking(false);
+    }
+  }
 
   async function handleFork() {
     if (!project) return;
@@ -80,9 +114,20 @@ export function PublicProjectPage() {
         <div className="topbar-title">
           <strong>{project.name}</strong>
           <span className="topbar-owner">por {project.owner.username}</span>
+          <span className="stat" title="Visitas">👁 {project.views}</span>
         </div>
 
         <div className="topbar-actions">
+          <button
+            type="button"
+            className={`like-button${liked ? " like-button--active" : ""}`}
+            onClick={handleLike}
+            disabled={liking}
+            title={user ? (liked ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
+          >
+            {liked ? "❤️" : "🤍"} {likeCount}
+          </button>
+
           <button
             type="button"
             className="action-button"
@@ -146,7 +191,11 @@ export function PublicProjectPage() {
         </div>
 
         <div className="right-column">
-          <PreviewFrame serverUrl={serverUrl} status={status} />
+          <PreviewFrame
+            serverUrl={serverUrl}
+            status={status}
+            onRun={() => setRunKey((k) => k + 1)}
+          />
           <TerminalPanel logs={logs} />
         </div>
       </div>

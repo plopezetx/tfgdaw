@@ -10,6 +10,7 @@ import { AIPanel } from "../components/AIPanel";
 import { useWebContainer } from "../hooks/useWebContainer";
 import { initialFiles } from "../data/initialFiles";
 import { createProjectFile, renameProjectFile } from "../utils/projectFiles";
+import { exportProjectZip, importFiles } from "../utils/projectIO";
 import { useAuth } from "../context/AuthContext";
 import * as api from "../lib/api";
 import type { ProjectFile } from "../types/projects";
@@ -32,7 +33,11 @@ export function IDEPage() {
   const [togglingPublic, setTogglingPublic] = useState(false);
   const [bottomPanel, setBottomPanel] = useState<"terminal" | "ai">("terminal");
   const [editorSelection] = useState<string>("");
+  const [dirty, setDirty] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
   const saveLabelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const { status, serverUrl, logs, isCompatible } = useWebContainer(
     files,
@@ -68,18 +73,52 @@ export function IDEPage() {
 
   useEffect(() => {
     if (!projectId) return;
-    if (saveLabel === "saved") return;
+    if (!dirty) return;
 
     const timer = setTimeout(() => {
-      api.saveSnapshot(projectId, files).catch(() => {
-        // Silenciar el error automático; el usuario puede usar Guardar manual.
-      });
+      api
+        .saveSnapshot(projectId, files)
+        .then(() => setDirty(false))
+        .catch(() => {
+          // Silenciar el error automático; el usuario puede usar Guardar manual.
+        });
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [files, projectId, saveLabel]);
+  }, [files, projectId, dirty]);
+
+  // Aviso al cerrar/recargar la pestaña si hay cambios sin guardar
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (!dirty) return;
+      e.preventDefault();
+      e.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [dirty]);
+
+  // Atajos de teclado: Ctrl+S guardar, Ctrl+Enter ejecutar
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        setRunKey((key) => key + 1);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files, projectId]);
 
   function handleChangeFileContent(newContent: string) {
+    setDirty(true);
     setFiles((currentFiles) =>
       currentFiles.map((file) =>
         file.path === activeFilePath ? { ...file, content: newContent } : file
@@ -95,6 +134,7 @@ export function IDEPage() {
 
     try {
       await api.saveSnapshot(projectId, files);
+      setDirty(false);
       setSaveLabel("saved");
 
       if (saveLabelTimerRef.current) {
@@ -106,6 +146,52 @@ export function IDEPage() {
       setError((err as Error).message ?? "Error al guardar el proyecto");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRenameProject() {
+    const trimmed = nameDraft.trim();
+    setEditingName(false);
+
+    if (!projectId || !trimmed || trimmed === projectName) return;
+
+    const previous = projectName;
+    setProjectName(trimmed);
+
+    try {
+      await api.updateProject(projectId, { name: trimmed });
+    } catch (err) {
+      setProjectName(previous);
+      setError((err as Error).message ?? "No se pudo renombrar el proyecto");
+    }
+  }
+
+  function handleExport() {
+    exportProjectZip(files, projectName || "proyecto").catch(() => {
+      setError("No se pudo exportar el proyecto");
+    });
+  }
+
+  async function handleImport(event: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = event.target.files;
+    if (!fileList || fileList.length === 0) return;
+
+    try {
+      const imported = await importFiles(fileList);
+      if (imported.length === 0) return;
+
+      setFiles((current) => {
+        const byPath = new Map(current.map((file) => [file.path, file]));
+        for (const file of imported) byPath.set(file.path, file);
+        return Array.from(byPath.values());
+      });
+      setActiveFilePath(imported[0].path);
+      setDirty(true);
+    } catch {
+      setError("No se pudieron importar los archivos");
+    } finally {
+      // Permite volver a importar el mismo archivo
+      event.target.value = "";
     }
   }
 
@@ -146,6 +232,7 @@ export function IDEPage() {
 
     setFiles((currentFiles) => [...currentFiles, nextFile]);
     setActiveFilePath(nextFile.path);
+    setDirty(true);
   }
 
   function handleRenameFile(path: string) {
@@ -172,6 +259,7 @@ export function IDEPage() {
         candidate.path === path ? renamedFile : candidate
       )
     );
+    setDirty(true);
 
     if (activeFilePath === path) {
       setActiveFilePath(renamedFile.path);
@@ -188,6 +276,7 @@ export function IDEPage() {
 
     const nextFiles = files.filter((file) => file.path !== path);
     setFiles(nextFiles);
+    setDirty(true);
 
     if (activeFilePath === path) {
       setActiveFilePath(nextFiles[0]?.path ?? "/index.html");
@@ -211,13 +300,66 @@ export function IDEPage() {
     <main className="app-shell">
       <header className="topbar">
         <div className="topbar-title">
-          <strong>{projectName || "IDE Web"}</strong>
+          {editingName ? (
+            <input
+              className="topbar-name-input"
+              value={nameDraft}
+              autoFocus
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={handleRenameProject}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleRenameProject();
+                if (e.key === "Escape") setEditingName(false);
+              }}
+            />
+          ) : (
+            <strong
+              className="topbar-name"
+              title="Haz clic para renombrar"
+              onClick={() => {
+                setNameDraft(projectName);
+                setEditingName(true);
+              }}
+            >
+              {projectName || "IDE Web"}
+            </strong>
+          )}
+          {dirty && <span className="dirty-dot" title="Cambios sin guardar">●</span>}
         </div>
 
         <div className="topbar-actions">
-          <button className="action-button" onClick={() => navigate("/projects")}>Volver</button>
+          <button
+            className="action-button"
+            onClick={() => {
+              if (dirty && !confirm("Tienes cambios sin guardar. ¿Salir igualmente?")) return;
+              navigate("/projects");
+            }}
+          >
+            Volver
+          </button>
           <button className="action-button" onClick={handleSave} disabled={saving}>
             {saveLabel === "saved" ? "Guardado ✓" : "Guardar"}
+          </button>
+          <input
+            ref={importInputRef}
+            type="file"
+            multiple
+            style={{ display: "none" }}
+            onChange={handleImport}
+          />
+          <button
+            className="action-button"
+            onClick={() => importInputRef.current?.click()}
+            title="Importar archivos al proyecto"
+          >
+            Importar
+          </button>
+          <button
+            className="action-button"
+            onClick={handleExport}
+            title="Descargar el proyecto como .zip"
+          >
+            Exportar
           </button>
           <button
             className={`action-button${isPublic ? " action-button-active" : ""}`}
@@ -249,7 +391,13 @@ export function IDEPage() {
           <button className="run-button" onClick={() => setRunKey((key) => key + 1)}>
             Ejecutar
           </button>
-          <button className="action-button" onClick={() => logout()}>
+          <button
+            className="action-button"
+            onClick={() => {
+              if (dirty && !confirm("Tienes cambios sin guardar. ¿Salir igualmente?")) return;
+              logout();
+            }}
+          >
             Salir
           </button>
         </div>
@@ -284,33 +432,39 @@ export function IDEPage() {
         </div>
 
         <div className="right-column">
-          <PreviewFrame serverUrl={serverUrl} status={status} />
+          <PreviewFrame
+            serverUrl={serverUrl}
+            status={status}
+            onRun={() => setRunKey((key) => key + 1)}
+          />
 
-          <div className="bottom-panel-tabs">
-            <button
-              className={`panel-tab${bottomPanel === "terminal" ? " panel-tab--active" : ""}`}
-              onClick={() => setBottomPanel("terminal")}
-            >
-              Terminal
-            </button>
-            <button
-              className={`panel-tab${bottomPanel === "ai" ? " panel-tab--active" : ""}`}
-              onClick={() => setBottomPanel("ai")}
-            >
-              IA Asistente
-            </button>
+          <div className="bottom-area">
+            <div className="bottom-panel-tabs">
+              <button
+                className={`panel-tab${bottomPanel === "terminal" ? " panel-tab--active" : ""}`}
+                onClick={() => setBottomPanel("terminal")}
+              >
+                Terminal
+              </button>
+              <button
+                className={`panel-tab${bottomPanel === "ai" ? " panel-tab--active" : ""}`}
+                onClick={() => setBottomPanel("ai")}
+              >
+                IA Asistente
+              </button>
+            </div>
+
+            {bottomPanel === "terminal" ? (
+              <TerminalPanel logs={logs} />
+            ) : (
+              <AIPanel
+                fileContent={activeFile?.content ?? ""}
+                fileName={activeFile?.path ?? ""}
+                selection={editorSelection || undefined}
+                onApplyCode={(code) => handleChangeFileContent(code)}
+              />
+            )}
           </div>
-
-          {bottomPanel === "terminal" ? (
-            <TerminalPanel logs={logs} />
-          ) : (
-            <AIPanel
-              fileContent={activeFile?.content ?? ""}
-              fileName={activeFile?.path ?? ""}
-              selection={editorSelection || undefined}
-              onApplyCode={(code) => handleChangeFileContent(code)}
-            />
-          )}
         </div>
       </div>
     </main>
