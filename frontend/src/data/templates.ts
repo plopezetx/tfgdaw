@@ -559,8 +559,368 @@ h1 { font-size: 22px; }
   ],
 };
 
+// ─── Plantilla 4: Calculadora ────────────────────────────────────────────────
+
+const calculatorTemplate: ProjectTemplate = {
+  id: "calculator",
+  name: "Calculadora",
+  icon: "🧮",
+  description: "Calculadora funcional con teclado de botones.",
+  files: [
+    {
+      name: "index.html",
+      path: "/index.html",
+      language: "html",
+      content: `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Calculadora</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="calc">
+      <div class="display" id="display">0</div>
+      <div class="keys">
+        <button class="key key-clear" data-action="clear">C</button>
+        <button class="key" data-action="del">⌫</button>
+        <button class="key key-op" data-op="/">÷</button>
+        <button class="key key-op" data-op="*">×</button>
+
+        <button class="key" data-num="7">7</button>
+        <button class="key" data-num="8">8</button>
+        <button class="key" data-num="9">9</button>
+        <button class="key key-op" data-op="-">−</button>
+
+        <button class="key" data-num="4">4</button>
+        <button class="key" data-num="5">5</button>
+        <button class="key" data-num="6">6</button>
+        <button class="key key-op" data-op="+">+</button>
+
+        <button class="key" data-num="1">1</button>
+        <button class="key" data-num="2">2</button>
+        <button class="key" data-num="3">3</button>
+        <button class="key key-equals" data-action="equals">=</button>
+
+        <button class="key key-zero" data-num="0">0</button>
+        <button class="key" data-num=".">.</button>
+      </div>
+    </div>
+    <script src="/src/main.js"></script>
+  </body>
+</html>`,
+    },
+    {
+      name: "main.js",
+      path: "/src/main.js",
+      language: "javascript",
+      content: `const display = document.getElementById("display");
+let expression = "";
+
+function render() {
+  display.textContent = expression || "0";
+}
+
+document.querySelectorAll(".key").forEach((key) => {
+  key.addEventListener("click", () => {
+    const { num, op, action } = key.dataset;
+
+    if (num !== undefined) expression += num;
+    if (op !== undefined) expression += op;
+
+    if (action === "clear") expression = "";
+    if (action === "del") expression = expression.slice(0, -1);
+    if (action === "equals") {
+      try {
+        // Evaluación simple de la expresión introducida
+        expression = String(eval(expression));
+      } catch {
+        expression = "Error";
+      }
+    }
+
+    render();
+  });
+});
+
+render();`,
+    },
+    {
+      name: "styles.css",
+      path: "/src/styles.css",
+      language: "css",
+      content: `* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  font-family: Arial, sans-serif;
+}
+
+.calc {
+  width: 280px;
+  background: #1e293b;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.display {
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 32px;
+  text-align: right;
+  padding: 18px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.key {
+  padding: 16px;
+  font-size: 18px;
+  border: 0;
+  border-radius: 10px;
+  background: #334155;
+  color: #e5e7eb;
+  cursor: pointer;
+}
+
+.key:hover { background: #475569; }
+.key-op { background: #2563eb; }
+.key-op:hover { background: #1d4ed8; }
+.key-clear { background: #b91c1c; }
+.key-equals { background: #16a34a; grid-row: span 2; }
+.key-zero { grid-column: span 2; }`,
+    },
+  ],
+};
+
+// ─── Plantilla 5: Reloj digital ──────────────────────────────────────────────
+
+const clockTemplate: ProjectTemplate = {
+  id: "clock",
+  name: "Reloj digital",
+  icon: "🕒",
+  description: "Reloj con fecha que se actualiza en tiempo real.",
+  files: [
+    {
+      name: "index.html",
+      path: "/index.html",
+      language: "html",
+      content: `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reloj</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="clock">
+      <div class="time" id="time">00:00:00</div>
+      <div class="date" id="date">—</div>
+    </div>
+    <script src="/src/main.js"></script>
+  </body>
+</html>`,
+    },
+    {
+      name: "main.js",
+      path: "/src/main.js",
+      language: "javascript",
+      content: `const timeEl = document.getElementById("time");
+const dateEl = document.getElementById("date");
+
+const DIAS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+function pad(n) {
+  return String(n).padStart(2, "0");
+}
+
+function update() {
+  const now = new Date();
+  timeEl.textContent = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+  dateEl.textContent = DIAS[now.getDay()] + ", " + now.getDate() + " de " + MESES[now.getMonth()];
+}
+
+update();
+setInterval(update, 1000);`,
+    },
+    {
+      name: "styles.css",
+      path: "/src/styles.css",
+      language: "css",
+      content: `body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, #1e293b, #020617);
+  color: white;
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.clock {
+  text-align: center;
+}
+
+.time {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  text-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+}
+
+.date {
+  font-size: 20px;
+  color: #94a3b8;
+  margin-top: 8px;
+  text-transform: capitalize;
+}`,
+    },
+  ],
+};
+
+// ─── Plantilla 6: Lienzo de dibujo ───────────────────────────────────────────
+
+const paintTemplate: ProjectTemplate = {
+  id: "paint",
+  name: "Lienzo de dibujo",
+  icon: "🎨",
+  description: "Dibuja con el ratón; elige color y grosor.",
+  files: [
+    {
+      name: "index.html",
+      path: "/index.html",
+      language: "html",
+      content: `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dibujo</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="toolbar">
+      <input type="color" id="color" value="#3b82f6" />
+      <input type="range" id="size" min="1" max="30" value="5" />
+      <button id="clear">Limpiar</button>
+    </div>
+    <canvas id="board" width="600" height="400"></canvas>
+    <script src="/src/main.js"></script>
+  </body>
+</html>`,
+    },
+    {
+      name: "main.js",
+      path: "/src/main.js",
+      language: "javascript",
+      content: `const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const colorInput = document.getElementById("color");
+const sizeInput = document.getElementById("size");
+const clearBtn = document.getElementById("clear");
+
+let drawing = false;
+
+function pos(e) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+canvas.addEventListener("mousedown", (e) => {
+  drawing = true;
+  const p = pos(e);
+  ctx.beginPath();
+  ctx.moveTo(p.x, p.y);
+});
+
+canvas.addEventListener("mousemove", (e) => {
+  if (!drawing) return;
+  const p = pos(e);
+  ctx.lineTo(p.x, p.y);
+  ctx.strokeStyle = colorInput.value;
+  ctx.lineWidth = sizeInput.value;
+  ctx.lineCap = "round";
+  ctx.stroke();
+});
+
+window.addEventListener("mouseup", () => { drawing = false; });
+
+clearBtn.addEventListener("click", () => {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+});`,
+    },
+    {
+      name: "styles.css",
+      path: "/src/styles.css",
+      language: "css",
+      content: `body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #0f172a;
+  font-family: Arial, sans-serif;
+}
+
+.toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #1e293b;
+  padding: 10px 16px;
+  border-radius: 10px;
+}
+
+.toolbar input[type="color"] {
+  width: 40px;
+  height: 32px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.toolbar button {
+  background: #b91c1c;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+canvas {
+  background: white;
+  border-radius: 10px;
+  cursor: crosshair;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}`,
+    },
+  ],
+};
+
 export const projectTemplates: ProjectTemplate[] = [
   snakeTemplate,
   loginTemplate,
   todoTemplate,
+  calculatorTemplate,
+  clockTemplate,
+  paintTemplate,
 ];

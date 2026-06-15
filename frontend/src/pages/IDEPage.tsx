@@ -224,10 +224,7 @@ export function IDEPage() {
     navigator.clipboard.writeText(url).catch(() => {});
   }
 
-  function handleCreateFile() {
-    const path = prompt("Ruta del nuevo archivo", "/src/new-file.js");
-    if (!path) return;
-
+  function handleCreateFile(path: string) {
     const nextFile = createProjectFile(path);
 
     if (!nextFile) {
@@ -245,17 +242,19 @@ export function IDEPage() {
     setDirty(true);
   }
 
-  function handleRenameFile(path: string) {
+  function handleRenameFile(path: string, newName: string) {
     const file = files.find((candidate) => candidate.path === path);
     if (!file) return;
 
-    const nextPath = prompt("Nueva ruta del archivo", file.path);
-    if (!nextPath || nextPath === file.path) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === file.name) return;
 
-    const renamedFile = renameProjectFile(file, nextPath);
+    // Reemplaza solo el nombre del archivo, manteniendo su carpeta
+    const parentDir = path.slice(0, path.length - file.name.length);
+    const renamedFile = renameProjectFile(file, `${parentDir}${trimmed}`);
 
     if (!renamedFile) {
-      toast("La ruta no es válida.", "error");
+      toast("El nombre no es válido.", "error");
       return;
     }
 
@@ -281,8 +280,6 @@ export function IDEPage() {
       toast("El proyecto debe mantener al menos un archivo.", "error");
       return;
     }
-
-    if (!confirm(`Eliminar ${path}?`)) return;
 
     const nextFiles = files.filter((file) => file.path !== path);
     setFiles(nextFiles);

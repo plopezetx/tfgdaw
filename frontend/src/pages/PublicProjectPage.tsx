@@ -31,6 +31,8 @@ export function PublicProjectPage() {
   const [liking, setLiking] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [favorited, setFavorited] = useState(false);
+  const [favoriting, setFavoriting] = useState(false);
 
   const { status, serverUrl, logs, isCompatible } = useWebContainer(files, runKey, 0);
 
@@ -51,7 +53,7 @@ export function PublicProjectPage() {
           .then((c) => setCommentCount(c.length))
           .catch(() => {});
 
-        // Si hay sesión, comprobamos si el usuario ya le dio like
+        // Si hay sesión, comprobamos like y favorito del usuario
         if (user) {
           api
             .getLikeStatus(p.id)
@@ -59,6 +61,10 @@ export function PublicProjectPage() {
               setLiked(s.liked);
               setLikeCount(s.likeCount);
             })
+            .catch(() => {});
+          api
+            .getFavoriteStatus(p.id)
+            .then((s) => setFavorited(s.favorited))
             .catch(() => {});
         }
       })
@@ -82,6 +88,24 @@ export function PublicProjectPage() {
       toast((err as Error).message ?? "No se pudo registrar el me gusta", "error");
     } finally {
       setLiking(false);
+    }
+  }
+
+  async function handleFavorite() {
+    if (!project) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setFavoriting(true);
+    try {
+      const result = await api.toggleFavorite(project.id);
+      setFavorited(result.favorited);
+      toast(result.favorited ? "Añadido a favoritos" : "Quitado de favoritos", "success");
+    } catch (err) {
+      toast((err as Error).message ?? "No se pudo actualizar el favorito", "error");
+    } finally {
+      setFavoriting(false);
     }
   }
 
@@ -142,6 +166,16 @@ export function PublicProjectPage() {
             title={user ? (liked ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
           >
             {liked ? "❤️" : "🤍"} {likeCount}
+          </button>
+
+          <button
+            type="button"
+            className={`action-button${favorited ? " action-button-active" : ""}`}
+            onClick={handleFavorite}
+            disabled={favoriting}
+            title={favorited ? "Quitar de favoritos" : "Guardar en favoritos"}
+          >
+            {favorited ? "★ Guardado" : "☆ Guardar"}
           </button>
 
           <button

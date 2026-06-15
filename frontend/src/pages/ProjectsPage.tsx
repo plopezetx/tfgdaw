@@ -5,6 +5,12 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import * as api from "../lib/api";
 import { projectTemplates } from "../data/templates";
+import {
+  getUserTemplates,
+  saveUserTemplate,
+  deleteUserTemplate,
+  type UserTemplate,
+} from "../data/userTemplates";
 
 export function ProjectsPage() {
   const { user, logout } = useAuth();
@@ -19,6 +25,14 @@ export function ProjectsPage() {
   const [search, setSearch] = useState("");
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [filter, setFilter] = useState<"all" | "public" | "private">("all");
+  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>(() =>
+    user ? getUserTemplates(user.id) : []
+  );
 
   useEffect(() => {
     async function loadProjects() {
@@ -81,6 +95,43 @@ export function ProjectsPage() {
     }
   }
 
+  async function handleCreateFromUserTemplate(template: UserTemplate) {
+    setCreatingTemplate(template.id);
+    setError(null);
+    try {
+      const project = await api.createProject(template.name, template.description);
+      await api.saveSnapshot(project.id, template.files);
+      navigate(`/app/${project.id}`);
+    } catch (err) {
+      setError((err as Error).message ?? "Error al crear desde la plantilla");
+      setCreatingTemplate(null);
+    }
+  }
+
+  async function handleSaveAsTemplate(project: api.ProjectSummary) {
+    if (!user) return;
+    try {
+      const full = await api.getProject(project.id);
+      const files = full.snapshot?.files ?? [];
+      if (files.length === 0) {
+        toast("El proyecto no tiene archivos para guardar", "error");
+        return;
+      }
+      saveUserTemplate(user.id, project.name, project.description ?? "", files);
+      setUserTemplates(getUserTemplates(user.id));
+      toast("Guardado en Mis plantillas", "success");
+    } catch (err) {
+      toast((err as Error).message ?? "No se pudo guardar la plantilla", "error");
+    }
+  }
+
+  function handleDeleteUserTemplate(id: string) {
+    if (!user) return;
+    deleteUserTemplate(user.id, id);
+    setUserTemplates(getUserTemplates(user.id));
+    toast("Plantilla eliminada", "success");
+  }
+
   async function handleTogglePublic(project: api.ProjectSummary) {
     try {
       const updated = await api.updateProject(project.id, {
@@ -95,27 +146,38 @@ export function ProjectsPage() {
     }
   }
 
-  async function handleEdit(project: api.ProjectSummary) {
-    const name = prompt("Nuevo nombre del proyecto", project.name);
-    if (name === null) return;
+  function startEdit(project: api.ProjectSummary) {
+    setEditingId(project.id);
+    setEditName(project.name);
+    setEditDescription(project.description ?? "");
+  }
 
-    const description = prompt(
-      "Descripción del proyecto",
-      project.description ?? ""
-    );
-    if (description === null) return;
+  function cancelEdit() {
+    setEditingId(null);
+  }
 
+  async function saveEdit(project: api.ProjectSummary) {
+    const name = editName.trim();
+    if (!name) {
+      toast("El nombre no puede estar vacío", "error");
+      return;
+    }
+
+    setSavingEdit(true);
     try {
       const updated = await api.updateProject(project.id, {
-        name: name.trim() || project.name,
-        description: description.trim(),
+        name,
+        description: editDescription.trim(),
       });
       setProjects((current) =>
         current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
       );
+      setEditingId(null);
       toast("Proyecto actualizado", "success");
     } catch (err) {
       toast((err as Error).message ?? "Error al editar el proyecto", "error");
+    } finally {
+      setSavingEdit(false);
     }
   }
 
@@ -141,6 +203,8 @@ export function ProjectsPage() {
   }
 
   const filteredProjects = projects.filter((project) => {
+    if (filter === "public" && !project.isPublic) return false;
+    if (filter === "private" && project.isPublic) return false;
     const term = search.trim().toLowerCase();
     if (!term) return true;
     return (
@@ -173,6 +237,8 @@ export function ProjectsPage() {
 
         <div className="page-actions">
           <Link to="/gallery" className="page-action-link">Galería pública</Link>
+          <Link to="/following" className="page-action-link">Siguiendo</Link>
+          <Link to="/favorites" className="page-action-link">Favoritos</Link>
           <Link to="/profile" className="page-action-link">Perfil</Link>
           <button type="button" onClick={() => logout()}>
             Cerrar sesión
@@ -220,6 +286,41 @@ export function ProjectsPage() {
         </div>
       </section>
 
+      {userTemplates.length > 0 && (
+        <section className="card">
+          <h2>Mis plantillas</h2>
+          <div className="template-grid">
+            {userTemplates.map((template) => (
+              <div key={template.id} className="template-card-wrap">
+                <button
+                  type="button"
+                  className="template-card"
+                  onClick={() => handleCreateFromUserTemplate(template)}
+                  disabled={creatingTemplate !== null}
+                >
+                  <span className="template-icon">📦</span>
+                  <span className="template-name">{template.name}</span>
+                  <span className="template-desc">
+                    {template.description || "Plantilla guardada"}
+                  </span>
+                  {creatingTemplate === template.id && (
+                    <span className="template-loading">Creando…</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="template-delete"
+                  onClick={() => handleDeleteUserTemplate(template.id)}
+                  title="Eliminar plantilla"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="card">
         <div className="section-head">
           <h2>Proyectos guardados</h2>
@@ -233,6 +334,29 @@ export function ProjectsPage() {
             />
           )}
         </div>
+
+        {projects.length > 0 && (
+          <div className="segmented project-filter">
+            <button
+              className={`segmented-btn${filter === "all" ? " segmented-btn--active" : ""}`}
+              onClick={() => setFilter("all")}
+            >
+              Todos
+            </button>
+            <button
+              className={`segmented-btn${filter === "public" ? " segmented-btn--active" : ""}`}
+              onClick={() => setFilter("public")}
+            >
+              Públicos
+            </button>
+            <button
+              className={`segmented-btn${filter === "private" ? " segmented-btn--active" : ""}`}
+              onClick={() => setFilter("private")}
+            >
+              Privados
+            </button>
+          </div>
+        )}
 
         {loading && <p>Cargando proyectos...</p>}
         {error && <p className="form-error">{error}</p>}
@@ -251,72 +375,128 @@ export function ProjectsPage() {
               key={project.id}
               className={`project-card${openMenuId === project.id ? " project-card--menu-open" : ""}`}
             >
-              <div>
-                <strong>{project.name}</strong>
-                <p>{project.description || "Sin descripción"}</p>
-                <small>Actualizado: {new Date(project.updatedAt).toLocaleString()}</small>
-              </div>
-              <div className="project-card-actions">
-                <Link to={`/app/${project.id}`}>Abrir IDE</Link>
-                <button
-                  type="button"
-                  className={`visibility-toggle ${project.isPublic ? "is-public" : ""}`}
-                  onClick={() => handleTogglePublic(project)}
-                  title={project.isPublic ? "Hacer privado" : "Publicar en galería"}
-                >
-                  {project.isPublic ? "Público" : "Privado"}
-                </button>
-
-                <div className="card-menu">
-                  <button
-                    type="button"
-                    className="card-menu-trigger"
-                    aria-label="Más acciones"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpenMenuId((current) =>
-                        current === project.id ? null : project.id
-                      );
+              {editingId === project.id ? (
+                <div className="project-edit">
+                  <input
+                    className="project-edit-name"
+                    value={editName}
+                    autoFocus
+                    onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit(project);
+                      if (e.key === "Escape") cancelEdit();
                     }}
-                  >
-                    ⋯
-                  </button>
-
-                  {openMenuId === project.id && (
-                    <div className="card-menu-dropdown" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          handleEdit(project);
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        disabled={duplicatingId === project.id}
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          handleDuplicate(project);
-                        }}
-                      >
-                        {duplicatingId === project.id ? "Duplicando…" : "Duplicar"}
-                      </button>
-                      <button
-                        type="button"
-                        className="card-menu-danger"
-                        onClick={() => {
-                          setOpenMenuId(null);
-                          handleDelete(project);
-                        }}
-                      >
-                        Eliminar
-                      </button>
-                    </div>
-                  )}
+                    placeholder="Nombre del proyecto"
+                  />
+                  <input
+                    className="project-edit-desc"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveEdit(project);
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    placeholder="Descripción (opcional)"
+                  />
+                  <div className="project-edit-actions">
+                    <button
+                      type="button"
+                      className="run-button"
+                      onClick={() => saveEdit(project)}
+                      disabled={savingEdit}
+                    >
+                      {savingEdit ? "…" : "Guardar"}
+                    </button>
+                    <button type="button" className="action-button" onClick={cancelEdit}>
+                      Cancelar
+                    </button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <strong
+                      className="project-name-edit"
+                      title="Haz clic para renombrar"
+                      onClick={() => startEdit(project)}
+                    >
+                      {project.name}
+                    </strong>
+                    <p>{project.description || "Sin descripción"}</p>
+                    <small>Actualizado: {new Date(project.updatedAt).toLocaleString()}</small>
+                  </div>
+                  <div className="project-card-actions">
+                    <Link to={`/app/${project.id}`}>Abrir IDE</Link>
+                    <button
+                      type="button"
+                      className={`visibility-toggle ${project.isPublic ? "is-public" : ""}`}
+                      onClick={() => handleTogglePublic(project)}
+                      title={project.isPublic ? "Hacer privado" : "Publicar en galería"}
+                    >
+                      {project.isPublic ? "Público" : "Privado"}
+                    </button>
+
+                    <div className="card-menu">
+                      <button
+                        type="button"
+                        className="card-menu-trigger"
+                        aria-label="Más acciones"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setOpenMenuId((current) =>
+                            current === project.id ? null : project.id
+                          );
+                        }}
+                      >
+                        ⋯
+                      </button>
+
+                      {openMenuId === project.id && (
+                        <div className="card-menu-dropdown" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              startEdit(project);
+                            }}
+                          >
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            disabled={duplicatingId === project.id}
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleDuplicate(project);
+                            }}
+                          >
+                            {duplicatingId === project.id ? "Duplicando…" : "Duplicar"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleSaveAsTemplate(project);
+                            }}
+                          >
+                            Guardar como plantilla
+                          </button>
+                          <button
+                            type="button"
+                            className="card-menu-danger"
+                            onClick={() => {
+                              setOpenMenuId(null);
+                              handleDelete(project);
+                            }}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ul>

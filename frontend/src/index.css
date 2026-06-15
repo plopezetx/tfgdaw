@@ -370,6 +370,56 @@ button:disabled {
   z-index: 30;
 }
 
+/* Nombre del proyecto editable al hacer clic */
+.project-name-edit {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin: -1px -4px;
+  transition: background 0.15s;
+}
+
+.project-name-edit:hover {
+  background: var(--surface);
+}
+
+/* Edición en línea del proyecto */
+.project-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.project-edit-name,
+.project-edit-desc {
+  background: var(--bg);
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.project-edit-name {
+  font-weight: 600;
+}
+
+.project-edit-desc {
+  font-size: 13px;
+}
+
+.project-edit-name:focus,
+.project-edit-desc:focus {
+  border-color: #3b82f6;
+}
+
+.project-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .project-card strong {
   color: var(--text-strong);
   font-size: 14px;
@@ -428,9 +478,9 @@ button:disabled {
 }
 
 .visibility-toggle.is-public {
-  color: #22c55e;
-  border-color: #166534;
-  background: #052e16;
+  color: #16a34a;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.14);
 }
 
 .delete-button {
@@ -578,6 +628,38 @@ button:disabled {
   font-weight: 600;
 }
 
+.template-card-wrap {
+  position: relative;
+}
+
+.template-card-wrap .template-card {
+  width: 100%;
+}
+
+.template-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border-2);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.template-delete:hover {
+  color: #f87171;
+  border-color: #991b1b;
+}
+
+.project-filter {
+  margin-bottom: 16px;
+}
+
 /* ─── Gallery ────────────────────────────────────────────────────────────── */
 
 .gallery-grid {
@@ -703,9 +785,9 @@ button:disabled {
 }
 
 .action-button-active {
-  color: #22c55e;
-  border-color: #166534;
-  background: #052e16;
+  color: #16a34a;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.14);
 }
 
 .run-button {
@@ -861,6 +943,17 @@ button:disabled {
   white-space: nowrap;
 }
 
+.file-rename-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  padding: 5px 6px;
+  outline: none;
+}
+
 .file-actions {
   display: flex;
   gap: 2px;
@@ -978,9 +1071,9 @@ button:disabled {
 }
 
 .mini-button--active {
-  background: #052e16;
-  border-color: #166534;
-  color: #22c55e;
+  background: rgba(34, 197, 94, 0.14);
+  border-color: #22c55e;
+  color: #16a34a;
 }
 
 .code-editor-status {
@@ -2140,4 +2233,99 @@ button:disabled {
 .segmented-btn--active {
   background: #2563eb;
   color: white;
+}
+
+/* ─── Diseño responsive ──────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .workspace {
+    grid-template-columns: 180px minmax(0, 1fr) 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-shell {
+    padding: 20px 14px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-actions {
+    flex-wrap: wrap;
+  }
+
+  .gallery-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .segmented {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Barra superior del IDE: se ajusta y no recorta botones */
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+
+  .topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  /* IDE: apilar las columnas en vertical y permitir scroll de la página */
+  .app-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+
+  .file-explorer {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    max-height: 160px;
+  }
+
+  .editor-panel {
+    min-height: 55vh;
+  }
+
+  .right-column {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    grid-template-rows: 300px 280px;
+  }
+
+  .project-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .project-card-actions {
+    justify-content: flex-start;
+  }
+
+  .popular-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }

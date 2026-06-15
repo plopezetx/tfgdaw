@@ -33,8 +33,19 @@ export type AuthorProject = {
 };
 
 export type AuthorProfile = {
-  user: { id: string; username: string; createdAt: string };
+  user: {
+    id: string;
+    username: string;
+    createdAt: string;
+    followerCount: number;
+    followingCount: number;
+  };
   projects: AuthorProject[];
+};
+
+export type FollowStatus = {
+  following: boolean;
+  followerCount: number;
 };
 
 export type ProjectWithSnapshot = ProjectSummary & {
@@ -185,6 +196,42 @@ export async function getPublicProject(slug: string): Promise<PublicProjectDetai
 
 export async function getAuthorProfile(username: string): Promise<AuthorProfile> {
   return request<AuthorProfile>(`/projects/public/author/${username}`);
+}
+
+// ─── Favoritos ──────────────────────────────────────────────────────────────
+
+export async function getFavorites(): Promise<GalleryProject[]> {
+  return request<GalleryProject[]>("/projects/favorites");
+}
+
+export async function getFollowingFeed(): Promise<GalleryProject[]> {
+  return request<GalleryProject[]>("/projects/following/feed");
+}
+
+export async function getFavoriteStatus(
+  projectId: string
+): Promise<{ favorited: boolean }> {
+  return request<{ favorited: boolean }>(`/projects/${projectId}/favorite-status`);
+}
+
+export async function toggleFavorite(
+  projectId: string
+): Promise<{ favorited: boolean }> {
+  return request<{ favorited: boolean }>(`/projects/${projectId}/favorite`, {
+    method: "POST",
+  });
+}
+
+// ─── Seguir autores ─────────────────────────────────────────────────────────
+
+export async function getFollowStatus(username: string): Promise<FollowStatus> {
+  return request<FollowStatus>(`/projects/authors/${username}/follow-status`);
+}
+
+export async function toggleFollow(username: string): Promise<FollowStatus> {
+  return request<FollowStatus>(`/projects/authors/${username}/follow`, {
+    method: "POST",
+  });
 }
 
 export async function forkProject(projectId: string): Promise<ProjectSummary> {

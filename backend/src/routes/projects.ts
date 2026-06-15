@@ -89,7 +89,12 @@ router.get("/public/:slug", async (req, res) => {
 router.get("/public/author/:username", async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { username: req.params.username },
-    select: { id: true, username: true, createdAt: true },
+    select: {
+      id: true,
+      username: true,
+      createdAt: true,
+      _count: { select: { followers: true, following: true } },
+    },
   });
 
   if (!user) {
@@ -113,7 +118,13 @@ router.get("/public/author/:username", async (req, res) => {
   });
 
   res.json({
-    user,
+    user: {
+      id: user.id,
+      username: user.username,
+      createdAt: user.createdAt,
+      followerCount: user._count.followers,
+      followingCount: user._count.following,
+    },
     projects: projects.map((project) => ({
       ...project,
       likeCount: project._count.likes,
@@ -167,6 +178,74 @@ router.get("/", async (req, res) => {
       _count: {
         select: { likes: true },
       },
+    },
+  });
+
+  res.json(
+    projects.map((project) => ({
+      ...project,
+      likeCount: project._count.likes,
+    }))
+  );
+});
+
+// GET /projects/favorites — proyectos públicos marcados como favoritos
+router.get("/favorites", async (req, res) => {
+  const favorites = await prisma.favorite.findMany({
+    where: { userId: req.user!.id, project: { isPublic: true } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      project: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          slug: true,
+          views: true,
+          createdAt: true,
+          updatedAt: true,
+          owner: { select: { username: true } },
+          _count: { select: { likes: true } },
+        },
+      },
+    },
+  });
+
+  res.json(
+    favorites.map((fav) => ({
+      ...fav.project,
+      likeCount: fav.project._count.likes,
+    }))
+  );
+});
+
+// GET /projects/following/feed — proyectos recientes de los autores que sigo
+router.get("/following/feed", async (req, res) => {
+  const follows = await prisma.follow.findMany({
+    where: { followerId: req.user!.id },
+    select: { followingId: true },
+  });
+
+  const authorIds = follows.map((f) => f.followingId);
+  if (authorIds.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const projects = await prisma.project.findMany({
+    where: { ownerId: { in: authorIds }, isPublic: true },
+    orderBy: { updatedAt: "desc" },
+    take: 30,
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      slug: true,
+      views: true,
+      createdAt: true,
+      updatedAt: true,
+      owner: { select: { username: true } },
+      _count: { select: { likes: true } },
     },
   });
 
@@ -537,6 +616,113 @@ router.get("/:id/versions/:versionId", async (req, res) => {
   }
 
   res.json(version);
+});
+
+// GET /projects/:id/favorite-status — saber si el usuario lo tiene en favoritos
+router.get("/:id/favorite-status", async (req, res) => {
+  const favorite = await prisma.favorite.findUnique({
+    where: {
+      userId_projectId: { userId: req.user!.id, projectId: req.params.id },
+    },
+  });
+  res.json({ favorited: Boolean(favorite) });
+});
+
+// POST /projects/:id/favorite — alterna el favorito del usuario
+router.post("/:id/favorite", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, isPublic: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  const existing = await prisma.favorite.findUnique({
+    where: {
+      userId_projectId: { userId: req.user!.id, projectId: project.id },
+    },
+  });
+
+  if (existing) {
+    await prisma.favorite.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.favorite.create({
+      data: { userId: req.user!.id, projectId: project.id },
+    });
+  }
+
+  res.json({ favorited: !existing });
+});
+
+// GET /projects/authors/:username/follow-status — estado de seguimiento y total
+router.get("/authors/:username/follow-status", async (req, res) => {
+  const author = await prisma.user.findUnique({
+    where: { username: req.params.username },
+    select: { id: true },
+  });
+
+  if (!author) {
+    res.status(404).json({ message: "Usuario no encontrado" });
+    return;
+  }
+
+  const following = await prisma.follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId: req.user!.id,
+        followingId: author.id,
+      },
+    },
+  });
+
+  const followerCount = await prisma.follow.count({
+    where: { followingId: author.id },
+  });
+
+  res.json({ following: Boolean(following), followerCount });
+});
+
+// POST /projects/authors/:username/follow — alterna el seguimiento
+router.post("/authors/:username/follow", async (req, res) => {
+  const author = await prisma.user.findUnique({
+    where: { username: req.params.username },
+    select: { id: true },
+  });
+
+  if (!author) {
+    res.status(404).json({ message: "Usuario no encontrado" });
+    return;
+  }
+
+  if (author.id === req.user!.id) {
+    res.status(400).json({ message: "No puedes seguirte a ti mismo" });
+    return;
+  }
+
+  const existing = await prisma.follow.findUnique({
+    where: {
+      followerId_followingId: {
+        followerId: req.user!.id,
+        followingId: author.id,
+      },
+    },
+  });
+
+  if (existing) {
+    await prisma.follow.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.follow.create({
+      data: { followerId: req.user!.id, followingId: author.id },
+    });
+  }
+
+  const followerCount = await prisma.follow.count({
+    where: { followingId: author.id },
+  });
+
+  res.json({ following: !existing, followerCount });
 });
 
 export default router;

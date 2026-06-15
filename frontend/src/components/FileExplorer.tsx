@@ -5,8 +5,8 @@ type FileExplorerProps = {
   files: ProjectFile[];
   activeFilePath: string;
   onSelectFile: (path: string) => void;
-  onCreateFile?: () => void;
-  onRenameFile?: (path: string) => void;
+  onCreateFile?: (path: string) => void;
+  onRenameFile?: (path: string, newName: string) => void;
   onDeleteFile?: (path: string) => void;
 };
 
@@ -53,7 +53,6 @@ function buildTree(files: ProjectFile[]): TreeNode[] {
     });
   }
 
-  // Ordena: carpetas primero, luego alfabético
   function sortNode(node: TreeNode) {
     node.children.sort((a, b) => {
       if (a.isFolder !== b.isFolder) return a.isFolder ? -1 : 1;
@@ -76,6 +75,18 @@ export function FileExplorer({
 }: FileExplorerProps) {
   const tree = useMemo(() => buildTree(files), [files]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [editingPath, setEditingPath] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [newPath, setNewPath] = useState("");
+
+  function commitCreate() {
+    const value = newPath.trim();
+    setCreating(false);
+    setNewPath("");
+    if (value) onCreateFile?.(value);
+  }
 
   function toggleFolder(path: string) {
     setCollapsed((current) => {
@@ -84,6 +95,18 @@ export function FileExplorer({
       else next.add(path);
       return next;
     });
+  }
+
+  function startRename(node: TreeNode) {
+    setConfirmingDelete(null);
+    setEditingPath(node.path);
+    setEditValue(node.name);
+  }
+
+  function commitRename(node: TreeNode) {
+    const value = editValue.trim();
+    setEditingPath(null);
+    if (value && value !== node.name) onRenameFile?.(node.path, value);
   }
 
   function renderNode(node: TreeNode, depth: number) {
@@ -106,6 +129,9 @@ export function FileExplorer({
       );
     }
 
+    const isEditing = editingPath === node.path;
+    const isConfirming = confirmingDelete === node.path;
+
     return (
       <div
         key={node.path}
@@ -113,33 +139,72 @@ export function FileExplorer({
           node.path === activeFilePath ? "file-row file-row-active" : "file-row"
         }
       >
-        <button
-          className="file-button tree-file"
-          style={indent}
-          onClick={() => onSelectFile(node.path)}
-        >
-          <span className="tree-label">{node.name}</span>
-        </button>
+        {isEditing ? (
+          <input
+            className="file-rename-input"
+            style={indent}
+            value={editValue}
+            autoFocus
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={() => setEditingPath(null)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commitRename(node);
+              if (e.key === "Escape") setEditingPath(null);
+            }}
+          />
+        ) : (
+          <button
+            className="file-button tree-file"
+            style={indent}
+            onClick={() => onSelectFile(node.path)}
+          >
+            <span className="tree-label">{node.name}</span>
+          </button>
+        )}
 
-        {(onRenameFile || onDeleteFile) && (
+        {!isEditing && (onRenameFile || onDeleteFile) && (
           <div className="file-actions">
-            {onRenameFile && (
-              <button
-                className="icon-action"
-                onClick={() => onRenameFile(node.path)}
-                title="Renombrar"
-              >
-                R
-              </button>
-            )}
-            {onDeleteFile && (
-              <button
-                className="icon-action danger-action"
-                onClick={() => onDeleteFile(node.path)}
-                title="Eliminar"
-              >
-                x
-              </button>
+            {isConfirming ? (
+              <>
+                <button
+                  className="icon-action danger-action"
+                  onClick={() => {
+                    setConfirmingDelete(null);
+                    onDeleteFile?.(node.path);
+                  }}
+                  title="Confirmar borrado"
+                >
+                  ✓
+                </button>
+                <button
+                  className="icon-action"
+                  onClick={() => setConfirmingDelete(null)}
+                  title="Cancelar"
+                >
+                  ✗
+                </button>
+              </>
+            ) : (
+              <>
+                {onRenameFile && (
+                  <button
+                    className="icon-action"
+                    onClick={() => startRename(node)}
+                    title="Renombrar"
+                  >
+                    R
+                  </button>
+                )}
+                {onDeleteFile && (
+                  <button
+                    className="icon-action danger-action"
+                    onClick={() => setConfirmingDelete(node.path)}
+                    title="Eliminar"
+                  >
+                    x
+                  </button>
+                )}
+              </>
             )}
           </div>
         )}
@@ -152,13 +217,39 @@ export function FileExplorer({
       <div className="panel-title explorer-title">
         <span>Archivos</span>
         {onCreateFile && (
-          <button className="icon-action" onClick={onCreateFile} title="Nuevo archivo">
+          <button
+            className="icon-action"
+            onClick={() => {
+              setNewPath("/src/");
+              setCreating(true);
+            }}
+            title="Nuevo archivo"
+          >
             +
           </button>
         )}
       </div>
 
-      <div className="file-list">{tree.map((node) => renderNode(node, 0))}</div>
+      <div className="file-list">
+        {creating && (
+          <div className="file-row">
+            <input
+              className="file-rename-input"
+              style={{ paddingLeft: "8px" }}
+              value={newPath}
+              autoFocus
+              placeholder="/src/archivo.js"
+              onChange={(e) => setNewPath(e.target.value)}
+              onBlur={() => setCreating(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") commitCreate();
+                if (e.key === "Escape") setCreating(false);
+              }}
+            />
+          </div>
+        )}
+        {tree.map((node) => renderNode(node, 0))}
+      </div>
     </aside>
   );
 }

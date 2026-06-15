@@ -1,23 +1,61 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "../lib/router";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import * as api from "../lib/api";
 
 export function AuthorPage() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<api.AuthorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [following, setFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     if (!username) return;
     setLoading(true);
     api
       .getAuthorProfile(username)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        setFollowerCount(p.user.followerCount);
+        if (user && user.username !== username) {
+          api
+            .getFollowStatus(username)
+            .then((s) => {
+              setFollowing(s.following);
+              setFollowerCount(s.followerCount);
+            })
+            .catch(() => {});
+        }
+      })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
-  }, [username]);
+  }, [username, user]);
+
+  async function handleFollow() {
+    if (!username) return;
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setFollowLoading(true);
+    try {
+      const result = await api.toggleFollow(username);
+      setFollowing(result.following);
+      setFollowerCount(result.followerCount);
+      toast(result.following ? "Ahora sigues a este autor" : "Has dejado de seguir", "success");
+    } catch (err) {
+      toast((err as Error).message ?? "No se pudo seguir al autor", "error");
+    } finally {
+      setFollowLoading(false);
+    }
+  }
 
   if (loading) {
     return <main className="page-shell"><p>Cargando perfil…</p></main>;
@@ -49,6 +87,16 @@ export function AuthorPage() {
           </p>
         </div>
         <div className="page-actions">
+          {user && user.username !== username && (
+            <button
+              type="button"
+              className={`action-button${following ? " action-button-active" : ""}`}
+              onClick={handleFollow}
+              disabled={followLoading}
+            >
+              {following ? "Siguiendo ✓" : "Seguir"}
+            </button>
+          )}
           <Link to="/gallery" className="page-action-link">Galería pública</Link>
         </div>
       </header>
@@ -57,6 +105,10 @@ export function AuthorPage() {
         <div className="stat-card">
           <span className="stat-number">{profile.projects.length}</span>
           <span className="stat-label">Proyectos</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-number">{followerCount}</span>
+          <span className="stat-label">Seguidores</span>
         </div>
         <div className="stat-card">
           <span className="stat-number">{totalViews}</span>

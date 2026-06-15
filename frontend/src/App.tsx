@@ -9,6 +9,8 @@ import { GalleryPage } from "./pages/GalleryPage";
 import { PublicProjectPage } from "./pages/PublicProjectPage";
 import { AuthorPage } from "./pages/AuthorPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import { FavoritesPage } from "./pages/FavoritesPage";
+import { FollowingPage } from "./pages/FollowingPage";
 import { Navigate, RouterProvider, usePath } from "./lib/router";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -52,6 +54,22 @@ function CurrentRoute() {
     return (
       <RequireAuth>
         <ProfilePage />
+      </RequireAuth>
+    );
+  }
+
+  if (path === "/favorites") {
+    return (
+      <RequireAuth>
+        <FavoritesPage />
+      </RequireAuth>
+    );
+  }
+
+  if (path === "/following") {
+    return (
+      <RequireAuth>
+        <FollowingPage />
       </RequireAuth>
     );
   }

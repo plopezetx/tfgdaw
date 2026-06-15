@@ -49,9 +49,13 @@ function loadStoredAuth(): StoredAuthState {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [authState, setAuthState] = useState<StoredAuthState>(() =>
-    loadStoredAuth()
-  );
+  const [authState, setAuthState] = useState<StoredAuthState>(() => {
+    const loaded = loadStoredAuth();
+    // Registramos el token de forma síncrona en el primer render para evitar
+    // que una petición de un componente hijo salga sin Authorization.
+    api.setAuthToken(loaded.token);
+    return loaded;
+  });
 
   useEffect(() => {
     api.setAuthToken(authState.token);
@@ -60,8 +64,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const result = await api.login(email, password);
-    const nextState = { token: result.token, user: result.user };
-    setAuthState(nextState);
+    // Aplicamos el token de inmediato para que la navegación posterior ya
+    // pueda hacer peticiones autenticadas sin esperar al efecto.
+    api.setAuthToken(result.token);
+    setAuthState({ token: result.token, user: result.user });
     return result.user;
   };
 
@@ -71,8 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string
   ) => {
     const result = await api.register(email, username, password);
-    const nextState = { token: result.token, user: result.user };
-    setAuthState(nextState);
+    api.setAuthToken(result.token);
+    setAuthState({ token: result.token, user: result.user });
     return result.user;
   };
 

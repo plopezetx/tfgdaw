@@ -17,6 +17,9 @@ model User {
   projects  Project[]
   likes     Like[]
   comments  Comment[]
+  favorites Favorite[]
+  following Follow[]  @relation("follower")
+  followers Follow[]  @relation("following")
 }
 
 model Project {
@@ -35,6 +38,7 @@ model Project {
   likes        Like[]
   comments     Comment[]
   versions     ProjectVersion[]
+  favorites    Favorite[]
 }
 
 // Un "me gusta" de un usuario a un proyecto (único por par usuario+proyecto)
@@ -68,6 +72,30 @@ model ProjectVersion {
   createdAt DateTime @default(now())
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// Proyecto marcado como favorito por un usuario
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+// Relación de seguimiento entre usuarios (follower sigue a following)
+model Follow {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  followerId  String
+  follower    User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User     @relation("following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
 }
 
 // Guarda el estado de los archivos del proyecto como JSON

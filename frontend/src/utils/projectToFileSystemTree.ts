@@ -1,15 +1,18 @@
 import type { FileSystemTree } from "@webcontainer/api";
 import type { ProjectFile } from "../types/projects";
 
+// Versiones FIJAS (no "latest"): Vite 8 usa rolldown, cuyos binarios nativos
+// (emnapi/WASI) fallan dentro de WebContainers con "Invalid typed array length".
+// Vite 5 + Rollup funciona de forma estable en el navegador.
 const DEFAULT_PACKAGE_JSON = {
   scripts: {
     start: "vite --host 0.0.0.0",
   },
   dependencies: {
-    "@vitejs/plugin-react": "latest",
-    vite: "latest",
-    react: "latest",
-    "react-dom": "latest",
+    "@vitejs/plugin-react": "^4.3.4",
+    vite: "^5.4.11",
+    react: "^18.3.1",
+    "react-dom": "^18.3.1",
   },
   devDependencies: {},
 };
