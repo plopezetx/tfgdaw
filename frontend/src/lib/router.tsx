@@ -74,6 +74,10 @@ export function useParams<T extends Record<string, string | undefined>>() {
     return { slug: value } as unknown as T;
   }
 
+  if (route === "u") {
+    return { username: value } as unknown as T;
+  }
+
   return {} as T;
 }
 

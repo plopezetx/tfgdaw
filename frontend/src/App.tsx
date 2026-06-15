@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { IDEPage } from "./pages/IDEPage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProjectsPage } from "./pages/ProjectsPage";
 import { GalleryPage } from "./pages/GalleryPage";
 import { PublicProjectPage } from "./pages/PublicProjectPage";
+import { AuthorPage } from "./pages/AuthorPage";
+import { ProfilePage } from "./pages/ProfilePage";
 import { Navigate, RouterProvider, usePath } from "./lib/router";
 
 function RequireAuth({ children }: { children: ReactNode }) {
@@ -32,10 +36,22 @@ function CurrentRoute() {
     return <PublicProjectPage />;
   }
 
+  if (path.startsWith("/u/")) {
+    return <AuthorPage />;
+  }
+
   if (path === "/projects") {
     return (
       <RequireAuth>
         <ProjectsPage />
+      </RequireAuth>
+    );
+  }
+
+  if (path === "/profile") {
+    return (
+      <RequireAuth>
+        <ProfilePage />
       </RequireAuth>
     );
   }
@@ -53,11 +69,15 @@ function CurrentRoute() {
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider>
-        <CurrentRoute />
-      </RouterProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <RouterProvider>
+            <CurrentRoute />
+          </RouterProvider>
+        </AuthProvider>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }
 

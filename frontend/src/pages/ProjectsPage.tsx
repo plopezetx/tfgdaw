@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "../lib/router";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import * as api from "../lib/api";
 import { projectTemplates } from "../data/templates";
 
 export function ProjectsPage() {
   const { user, logout } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<api.ProjectSummary[]>([]);
   const [newProjectName, setNewProjectName] = useState("");
@@ -85,10 +87,11 @@ export function ProjectsPage() {
         isPublic: !project.isPublic,
       });
       setProjects((current) =>
-        current.map((p) => (p.id === updated.id ? updated : p))
+        current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
       );
+      toast(updated.isPublic ? "Proyecto publicado" : "Proyecto hecho privado", "success");
     } catch (err) {
-      setError((err as Error).message ?? "Error al actualizar el proyecto");
+      toast((err as Error).message ?? "Error al actualizar el proyecto", "error");
     }
   }
 
@@ -108,16 +111,16 @@ export function ProjectsPage() {
         description: description.trim(),
       });
       setProjects((current) =>
-        current.map((p) => (p.id === updated.id ? updated : p))
+        current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
       );
+      toast("Proyecto actualizado", "success");
     } catch (err) {
-      setError((err as Error).message ?? "Error al editar el proyecto");
+      toast((err as Error).message ?? "Error al editar el proyecto", "error");
     }
   }
 
   async function handleDuplicate(project: api.ProjectSummary) {
     setDuplicatingId(project.id);
-    setError(null);
 
     try {
       const full = await api.getProject(project.id);
@@ -129,8 +132,9 @@ export function ProjectsPage() {
         await api.saveSnapshot(copy.id, full.snapshot.files);
       }
       setProjects((current) => [copy, ...current]);
+      toast("Proyecto duplicado", "success");
     } catch (err) {
-      setError((err as Error).message ?? "Error al duplicar el proyecto");
+      toast((err as Error).message ?? "Error al duplicar el proyecto", "error");
     } finally {
       setDuplicatingId(null);
     }
@@ -153,8 +157,9 @@ export function ProjectsPage() {
     try {
       await api.deleteProject(project.id);
       setProjects((current) => current.filter((p) => p.id !== project.id));
+      toast("Proyecto eliminado", "success");
     } catch (err) {
-      setError((err as Error).message ?? "Error al eliminar el proyecto");
+      toast((err as Error).message ?? "Error al eliminar el proyecto", "error");
     }
   }
 
@@ -168,6 +173,7 @@ export function ProjectsPage() {
 
         <div className="page-actions">
           <Link to="/gallery" className="page-action-link">Galería pública</Link>
+          <Link to="/profile" className="page-action-link">Perfil</Link>
           <button type="button" onClick={() => logout()}>
             Cerrar sesión
           </button>

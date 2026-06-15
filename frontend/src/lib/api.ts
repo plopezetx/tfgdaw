@@ -15,8 +15,26 @@ export type ProjectSummary = {
   description: string | null;
   isPublic: boolean;
   slug: string;
+  views?: number;
+  likeCount?: number;
   createdAt: string;
   updatedAt: string;
+};
+
+export type AuthorProject = {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  views: number;
+  likeCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AuthorProfile = {
+  user: { id: string; username: string; createdAt: string };
+  projects: AuthorProject[];
 };
 
 export type ProjectWithSnapshot = ProjectSummary & {
@@ -47,6 +65,20 @@ export type PublicProjectDetail = ProjectSummary & {
 export type LikeStatus = {
   liked: boolean;
   likeCount: number;
+};
+
+export type Comment = {
+  id: string;
+  content: string;
+  createdAt: string;
+  userId: string;
+  user: { username: string };
+};
+
+export type ProjectVersion = {
+  id: string;
+  label: string | null;
+  createdAt: string;
 };
 
 export function setAuthToken(token: string | null) {
@@ -151,6 +183,10 @@ export async function getPublicProject(slug: string): Promise<PublicProjectDetai
   return request<PublicProjectDetail>(`/projects/public/${slug}`);
 }
 
+export async function getAuthorProfile(username: string): Promise<AuthorProfile> {
+  return request<AuthorProfile>(`/projects/public/author/${username}`);
+}
+
 export async function forkProject(projectId: string): Promise<ProjectSummary> {
   return request<ProjectSummary>(`/projects/${projectId}/fork`, {
     method: "POST",
@@ -165,6 +201,79 @@ export async function toggleLike(projectId: string): Promise<LikeStatus> {
   return request<LikeStatus>(`/projects/${projectId}/like`, {
     method: "POST",
   });
+}
+
+// ─── Comentarios ────────────────────────────────────────────────────────────
+
+export async function getComments(slug: string): Promise<Comment[]> {
+  return request<Comment[]>(`/projects/public/${slug}/comments`);
+}
+
+export async function addComment(
+  projectId: string,
+  content: string
+): Promise<Comment> {
+  return request<Comment>(`/projects/${projectId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+}
+
+export async function deleteComment(
+  projectId: string,
+  commentId: string
+): Promise<void> {
+  return request<void>(`/projects/${projectId}/comments/${commentId}`, {
+    method: "DELETE",
+  });
+}
+
+// ─── Cuenta ─────────────────────────────────────────────────────────────────
+
+export async function updateProfile(
+  username: string,
+  email: string
+): Promise<{ user: User }> {
+  return request<{ user: User }>("/auth/me", {
+    method: "PUT",
+    body: JSON.stringify({ username, email }),
+  });
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string
+): Promise<{ message: string }> {
+  return request<{ message: string }>("/auth/password", {
+    method: "PUT",
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+}
+
+// ─── Historial de versiones ─────────────────────────────────────────────────
+
+export async function getVersions(projectId: string): Promise<ProjectVersion[]> {
+  return request<ProjectVersion[]>(`/projects/${projectId}/versions`);
+}
+
+export async function createVersion(
+  projectId: string,
+  files: ProjectFile[],
+  label?: string
+): Promise<ProjectVersion> {
+  return request<ProjectVersion>(`/projects/${projectId}/versions`, {
+    method: "POST",
+    body: JSON.stringify({ files, label }),
+  });
+}
+
+export async function getVersionFiles(
+  projectId: string,
+  versionId: string
+): Promise<{ files: ProjectFile[] }> {
+  return request<{ files: ProjectFile[] }>(
+    `/projects/${projectId}/versions/${versionId}`
+  );
 }
 
 export async function chatWithAI(

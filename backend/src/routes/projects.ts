@@ -85,6 +85,69 @@ router.get("/public/:slug", async (req, res) => {
   });
 });
 
+// GET /projects/public/author/:username - proyectos publicos de un autor
+router.get("/public/author/:username", async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { username: req.params.username },
+    select: { id: true, username: true, createdAt: true },
+  });
+
+  if (!user) {
+    res.status(404).json({ message: "Usuario no encontrado" });
+    return;
+  }
+
+  const projects = await prisma.project.findMany({
+    where: { ownerId: user.id, isPublic: true },
+    orderBy: { updatedAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      slug: true,
+      views: true,
+      createdAt: true,
+      updatedAt: true,
+      _count: { select: { likes: true } },
+    },
+  });
+
+  res.json({
+    user,
+    projects: projects.map((project) => ({
+      ...project,
+      likeCount: project._count.likes,
+    })),
+  });
+});
+
+// GET /projects/public/:slug/comments - comentarios de un proyecto publico
+router.get("/public/:slug/comments", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { slug: req.params.slug, isPublic: true },
+    select: { id: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  const comments = await prisma.comment.findMany({
+    where: { projectId: project.id },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      userId: true,
+      user: { select: { username: true } },
+    },
+  });
+
+  res.json(comments);
+});
+
 router.use(requireAuth);
 
 // GET /projects — lista de proyectos del usuario autenticado
@@ -98,11 +161,21 @@ router.get("/", async (req, res) => {
       description: true,
       isPublic: true,
       slug: true,
+      views: true,
       createdAt: true,
       updatedAt: true,
+      _count: {
+        select: { likes: true },
+      },
     },
   });
-  res.json(projects);
+
+  res.json(
+    projects.map((project) => ({
+      ...project,
+      likeCount: project._count.likes,
+    }))
+  );
 });
 
 // POST /projects — crear proyecto nuevo
@@ -311,6 +384,159 @@ router.post("/:id/like", async (req, res) => {
   });
 
   res.json({ liked: !existing, likeCount });
+});
+
+// POST /projects/:id/comments - añade un comentario a un proyecto publico
+router.post("/:id/comments", async (req, res) => {
+  const { content } = req.body as { content?: string };
+
+  if (!content?.trim()) {
+    res.status(400).json({ message: "El comentario no puede estar vacío" });
+    return;
+  }
+
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, isPublic: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto publico no encontrado" });
+    return;
+  }
+
+  const comment = await prisma.comment.create({
+    data: {
+      content: content.trim(),
+      userId: req.user!.id,
+      projectId: project.id,
+    },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      userId: true,
+      user: { select: { username: true } },
+    },
+  });
+
+  res.status(201).json(comment);
+});
+
+// DELETE /projects/:id/comments/:commentId - borra un comentario propio o si
+// eres el dueño del proyecto
+router.delete("/:id/comments/:commentId", async (req, res) => {
+  const comment = await prisma.comment.findUnique({
+    where: { id: req.params.commentId },
+    include: { project: { select: { ownerId: true } } },
+  });
+
+  if (!comment) {
+    res.status(404).json({ message: "Comentario no encontrado" });
+    return;
+  }
+
+  const isAuthor = comment.userId === req.user!.id;
+  const isProjectOwner = comment.project.ownerId === req.user!.id;
+
+  if (!isAuthor && !isProjectOwner) {
+    res.status(403).json({ message: "No puedes borrar este comentario" });
+    return;
+  }
+
+  await prisma.comment.delete({ where: { id: comment.id } });
+  res.status(204).send();
+});
+
+const MAX_VERSIONS = 20;
+
+// GET /projects/:id/versions - lista de versiones guardadas (sin archivos)
+router.get("/:id/versions", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, ownerId: req.user!.id },
+    select: { id: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto no encontrado" });
+    return;
+  }
+
+  const versions = await prisma.projectVersion.findMany({
+    where: { projectId: project.id },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, label: true, createdAt: true },
+  });
+
+  res.json(versions);
+});
+
+// POST /projects/:id/versions - guarda una nueva versión del proyecto
+router.post("/:id/versions", async (req, res) => {
+  const { files, label } = req.body as { files?: unknown; label?: string };
+
+  if (!files) {
+    res.status(400).json({ message: "files es obligatorio" });
+    return;
+  }
+
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, ownerId: req.user!.id },
+    select: { id: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto no encontrado" });
+    return;
+  }
+
+  const version = await prisma.projectVersion.create({
+    data: {
+      projectId: project.id,
+      files: files as Prisma.InputJsonValue,
+      label: label?.trim() || null,
+    },
+    select: { id: true, label: true, createdAt: true },
+  });
+
+  // Mantener solo las MAX_VERSIONS más recientes
+  const old = await prisma.projectVersion.findMany({
+    where: { projectId: project.id },
+    orderBy: { createdAt: "desc" },
+    skip: MAX_VERSIONS,
+    select: { id: true },
+  });
+
+  if (old.length > 0) {
+    await prisma.projectVersion.deleteMany({
+      where: { id: { in: old.map((v) => v.id) } },
+    });
+  }
+
+  res.status(201).json(version);
+});
+
+// GET /projects/:id/versions/:versionId - devuelve los archivos de una versión
+router.get("/:id/versions/:versionId", async (req, res) => {
+  const project = await prisma.project.findFirst({
+    where: { id: req.params.id, ownerId: req.user!.id },
+    select: { id: true },
+  });
+
+  if (!project) {
+    res.status(404).json({ message: "Proyecto no encontrado" });
+    return;
+  }
+
+  const version = await prisma.projectVersion.findFirst({
+    where: { id: req.params.versionId, projectId: project.id },
+  });
+
+  if (!version) {
+    res.status(404).json({ message: "Versión no encontrada" });
+    return;
+  }
+
+  res.json(version);
 });
 
 export default router;

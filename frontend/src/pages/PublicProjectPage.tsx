@@ -1,13 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "../lib/router";
+import { Link, useNavigate, useParams } from "../lib/router";
 import { FileExplorer } from "../components/FileExplorer";
 import { EditorTabs } from "../components/EditorTabs";
 import { CodeEditor } from "../components/CodeEditor";
 import { PreviewFrame } from "../components/PreviewFrame";
 import { TerminalPanel } from "../components/TerminalPanel";
+import { CommentsModal } from "../components/CommentsModal";
 import { useWebContainer } from "../hooks/useWebContainer";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import * as api from "../lib/api";
 import type { ProjectFile } from "../types/projects";
 
@@ -15,6 +17,7 @@ export function PublicProjectPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const [project, setProject] = useState<api.PublicProjectDetail | null>(null);
   const [files, setFiles] = useState<ProjectFile[]>([]);
@@ -26,6 +29,8 @@ export function PublicProjectPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [liking, setLiking] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [commentCount, setCommentCount] = useState(0);
 
   const { status, serverUrl, logs, isCompatible } = useWebContainer(files, runKey, 0);
 
@@ -40,6 +45,11 @@ export function PublicProjectPage() {
         const projectFiles = p.snapshot?.files ?? [];
         setFiles(projectFiles);
         setActiveFilePath(projectFiles[0]?.path ?? "");
+
+        api
+          .getComments(p.slug)
+          .then((c) => setCommentCount(c.length))
+          .catch(() => {});
 
         // Si hay sesión, comprobamos si el usuario ya le dio like
         if (user) {
@@ -69,7 +79,7 @@ export function PublicProjectPage() {
       setLiked(result.liked);
       setLikeCount(result.likeCount);
     } catch (err) {
-      setError((err as Error).message);
+      toast((err as Error).message ?? "No se pudo registrar el me gusta", "error");
     } finally {
       setLiking(false);
     }
@@ -80,9 +90,10 @@ export function PublicProjectPage() {
     setForking(true);
     try {
       const forked = await api.forkProject(project.id);
+      toast("Fork creado en tus proyectos", "success");
       navigate(`/app/${forked.id}`);
     } catch (err) {
-      setError((err as Error).message);
+      toast((err as Error).message ?? "No se pudo hacer fork", "error");
     } finally {
       setForking(false);
     }
@@ -113,7 +124,12 @@ export function PublicProjectPage() {
       <header className="topbar">
         <div className="topbar-title">
           <strong>{project.name}</strong>
-          <span className="topbar-owner">por {project.owner.username}</span>
+          <span className="topbar-owner">
+            por{" "}
+            <Link className="gallery-owner" to={`/u/${project.owner.username}`}>
+              {project.owner.username}
+            </Link>
+          </span>
           <span className="stat" title="Visitas">👁 {project.views}</span>
         </div>
 
@@ -126,6 +142,15 @@ export function PublicProjectPage() {
             title={user ? (liked ? "Quitar me gusta" : "Me gusta") : "Inicia sesión para dar me gusta"}
           >
             {liked ? "❤️" : "🤍"} {likeCount}
+          </button>
+
+          <button
+            type="button"
+            className="action-button"
+            onClick={() => setShowComments(true)}
+            title="Ver comentarios"
+          >
+            💬 {commentCount}
           </button>
 
           <button
@@ -199,6 +224,16 @@ export function PublicProjectPage() {
           <TerminalPanel logs={logs} />
         </div>
       </div>
+
+      {showComments && (
+        <CommentsModal
+          slug={project.slug}
+          projectId={project.id}
+          ownerId={project.owner.id}
+          onClose={() => setShowComments(false)}
+          onCountChange={setCommentCount}
+        />
+      )}
     </main>
   );
 }

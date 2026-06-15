@@ -25,6 +25,7 @@ interface AuthContextValue {
     username: string,
     password: string
   ) => Promise<api.User>;
+  updateUser: (user: api.User) => void;
   logout: () => void;
 }
 
@@ -75,6 +76,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result.user;
   };
 
+  const updateUser = (user: api.User) => {
+    setAuthState((current) => ({ ...current, user }));
+  };
+
   const logout = () => {
     setAuthState({ token: null, user: null });
     api.setAuthToken(null);
@@ -87,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       token: authState.token,
       login,
       register,
+      updateUser,
       logout,
     }),
     [authState]

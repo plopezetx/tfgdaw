@@ -7,11 +7,15 @@ import { CodeEditor } from "../components/CodeEditor";
 import { PreviewFrame } from "../components/PreviewFrame";
 import { TerminalPanel } from "../components/TerminalPanel";
 import { AIPanel } from "../components/AIPanel";
+import { VersionsModal } from "../components/VersionsModal";
+import { PreviewConsole } from "../components/PreviewConsole";
 import { useWebContainer } from "../hooks/useWebContainer";
+import { usePreviewConsole } from "../hooks/usePreviewConsole";
 import { initialFiles } from "../data/initialFiles";
 import { createProjectFile, renameProjectFile } from "../utils/projectFiles";
 import { exportProjectZip, importFiles } from "../utils/projectIO";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import * as api from "../lib/api";
 import type { ProjectFile } from "../types/projects";
 
@@ -19,6 +23,7 @@ export function IDEPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { toast } = useToast();
   const [files, setFiles] = useState<ProjectFile[]>(initialFiles);
   const [activeFilePath, setActiveFilePath] = useState<string>("/index.html");
   const [runKey, setRunKey] = useState(0);
@@ -31,11 +36,12 @@ export function IDEPage() {
   const [projectSlug, setProjectSlug] = useState<string | null>(null);
   const [isPublic, setIsPublic] = useState(false);
   const [togglingPublic, setTogglingPublic] = useState(false);
-  const [bottomPanel, setBottomPanel] = useState<"terminal" | "ai">("terminal");
+  const [bottomPanel, setBottomPanel] = useState<"terminal" | "ai" | "console">("terminal");
   const [editorSelection] = useState<string>("");
   const [dirty, setDirty] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
+  const [showVersions, setShowVersions] = useState(false);
   const saveLabelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -44,6 +50,7 @@ export function IDEPage() {
     runKey,
     resetKey
   );
+  const { logs: consoleLogs, clear: clearConsole } = usePreviewConsole(runKey);
 
   useEffect(() => {
     if (!projectId) {
@@ -136,6 +143,7 @@ export function IDEPage() {
       await api.saveSnapshot(projectId, files);
       setDirty(false);
       setSaveLabel("saved");
+      toast("Proyecto guardado", "success");
 
       if (saveLabelTimerRef.current) {
         clearTimeout(saveLabelTimerRef.current);
@@ -160,16 +168,17 @@ export function IDEPage() {
 
     try {
       await api.updateProject(projectId, { name: trimmed });
+      toast("Proyecto renombrado", "success");
     } catch (err) {
       setProjectName(previous);
-      setError((err as Error).message ?? "No se pudo renombrar el proyecto");
+      toast((err as Error).message ?? "No se pudo renombrar el proyecto", "error");
     }
   }
 
   function handleExport() {
-    exportProjectZip(files, projectName || "proyecto").catch(() => {
-      setError("No se pudo exportar el proyecto");
-    });
+    exportProjectZip(files, projectName || "proyecto")
+      .then(() => toast("Proyecto exportado como .zip", "success"))
+      .catch(() => toast("No se pudo exportar el proyecto", "error"));
   }
 
   async function handleImport(event: React.ChangeEvent<HTMLInputElement>) {
@@ -187,8 +196,9 @@ export function IDEPage() {
       });
       setActiveFilePath(imported[0].path);
       setDirty(true);
+      toast(`${imported.length} archivo(s) importado(s)`, "success");
     } catch {
-      setError("No se pudieron importar los archivos");
+      toast("No se pudieron importar los archivos", "error");
     } finally {
       // Permite volver a importar el mismo archivo
       event.target.value = "";
@@ -221,12 +231,12 @@ export function IDEPage() {
     const nextFile = createProjectFile(path);
 
     if (!nextFile) {
-      alert("La ruta no es válida.");
+      toast("La ruta no es válida.", "error");
       return;
     }
 
     if (files.some((file) => file.path === nextFile.path)) {
-      alert("Ya existe un archivo con esa ruta.");
+      toast("Ya existe un archivo con esa ruta.", "error");
       return;
     }
 
@@ -245,12 +255,12 @@ export function IDEPage() {
     const renamedFile = renameProjectFile(file, nextPath);
 
     if (!renamedFile) {
-      alert("La ruta no es válida.");
+      toast("La ruta no es válida.", "error");
       return;
     }
 
     if (files.some((candidate) => candidate.path === renamedFile.path)) {
-      alert("Ya existe un archivo con esa ruta.");
+      toast("Ya existe un archivo con esa ruta.", "error");
       return;
     }
 
@@ -268,7 +278,7 @@ export function IDEPage() {
 
   function handleDeleteFile(path: string) {
     if (files.length <= 1) {
-      alert("El proyecto debe mantener al menos un archivo.");
+      toast("El proyecto debe mantener al menos un archivo.", "error");
       return;
     }
 
@@ -382,6 +392,13 @@ export function IDEPage() {
             Reset
           </button>
           <button
+            className="action-button"
+            onClick={() => setShowVersions(true)}
+            title="Historial de versiones"
+          >
+            Historial
+          </button>
+          <button
             className={`action-button${bottomPanel === "ai" ? " action-button-active" : ""}`}
             onClick={() => setBottomPanel((p) => p === "ai" ? "terminal" : "ai")}
             title="Asistente de IA"
@@ -447,6 +464,12 @@ export function IDEPage() {
                 Terminal
               </button>
               <button
+                className={`panel-tab${bottomPanel === "console" ? " panel-tab--active" : ""}`}
+                onClick={() => setBottomPanel("console")}
+              >
+                Consola{consoleLogs.length > 0 ? ` (${consoleLogs.length})` : ""}
+              </button>
+              <button
                 className={`panel-tab${bottomPanel === "ai" ? " panel-tab--active" : ""}`}
                 onClick={() => setBottomPanel("ai")}
               >
@@ -456,6 +479,8 @@ export function IDEPage() {
 
             {bottomPanel === "terminal" ? (
               <TerminalPanel logs={logs} />
+            ) : bottomPanel === "console" ? (
+              <PreviewConsole logs={consoleLogs} onClear={clearConsole} />
             ) : (
               <AIPanel
                 fileContent={activeFile?.content ?? ""}
@@ -467,6 +492,19 @@ export function IDEPage() {
           </div>
         </div>
       </div>
+
+      {showVersions && projectId && (
+        <VersionsModal
+          projectId={projectId}
+          currentFiles={files}
+          onRestore={(restoredFiles) => {
+            setFiles(restoredFiles);
+            setActiveFilePath(restoredFiles[0]?.path ?? "/index.html");
+            setDirty(true);
+          }}
+          onClose={() => setShowVersions(false)}
+        />
+      )}
     </main>
   );
 }

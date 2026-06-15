@@ -18,8 +18,15 @@ El proyecto está en una versión funcional y ampliada:
 - Autenticación mediante backend Express con JWT.
 - CRUD de proyectos y snapshots con Prisma, autoguardado y atajos de teclado (Ctrl+S, Ctrl+Enter).
 - Editar, buscar y duplicar proyectos desde el panel "Mis proyectos".
-- Galería pública con buscador, vista pública y fork/remix.
-- Galería social: contador de visitas y "me gusta" en proyectos públicos.
+- Explorador de archivos con árbol de carpetas plegable.
+- Consola del preview: captura `console.log` y errores del programa en ejecución.
+- Historial de versiones: guardar y restaurar versiones anteriores del proyecto.
+- Galería pública con buscador, orden (recientes/vistos/gustados), vista pública y fork/remix.
+- Galería social: contador de visitas, "me gusta" y comentarios en proyectos públicos.
+- Página de perfil con avatar, estadísticas y calendario de actividad (estilo GitHub).
+- Página de perfil de autor (`/u/:username`) con sus proyectos públicos.
+- Ajustes de cuenta: editar nombre/email y cambiar contraseña.
+- Notificaciones (toasts) y tema claro/oscuro con persistencia.
 - Panel IA mediante backend proxy (Groq, streaming SSE).
 
 Pendiente principal para despliegue real: configurar PostgreSQL, variables de entorno y migraciones de Prisma.

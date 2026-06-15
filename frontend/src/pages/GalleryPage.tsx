@@ -10,6 +10,7 @@ export function GalleryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"recent" | "views" | "likes">("recent");
 
   useEffect(() => {
     api
@@ -19,15 +20,21 @@ export function GalleryPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredProjects = projects.filter((project) => {
-    const term = search.trim().toLowerCase();
-    if (!term) return true;
-    return (
-      project.name.toLowerCase().includes(term) ||
-      (project.description ?? "").toLowerCase().includes(term) ||
-      project.owner.username.toLowerCase().includes(term)
-    );
-  });
+  const filteredProjects = projects
+    .filter((project) => {
+      const term = search.trim().toLowerCase();
+      if (!term) return true;
+      return (
+        project.name.toLowerCase().includes(term) ||
+        (project.description ?? "").toLowerCase().includes(term) ||
+        project.owner.username.toLowerCase().includes(term)
+      );
+    })
+    .sort((a, b) => {
+      if (sort === "views") return b.views - a.views;
+      if (sort === "likes") return b.likeCount - a.likeCount;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    });
 
   return (
     <main className="page-shell">
@@ -37,15 +44,6 @@ export function GalleryPage() {
           <p>Proyectos compartidos por la comunidad</p>
         </div>
         <div className="page-actions">
-          {projects.length > 0 && (
-            <input
-              className="search-input"
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar…"
-            />
-          )}
           {user ? (
             <button type="button" onClick={() => navigate("/projects")}>
               Mis proyectos
@@ -57,6 +55,41 @@ export function GalleryPage() {
           )}
         </div>
       </header>
+
+      {projects.length > 0 && (
+        <div className="gallery-toolbar">
+          <div className="search-box">
+            <span className="search-box-icon">🔍</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Buscar por nombre, descripción o autor…"
+            />
+          </div>
+
+          <div className="segmented">
+            <button
+              className={`segmented-btn${sort === "recent" ? " segmented-btn--active" : ""}`}
+              onClick={() => setSort("recent")}
+            >
+              Recientes
+            </button>
+            <button
+              className={`segmented-btn${sort === "views" ? " segmented-btn--active" : ""}`}
+              onClick={() => setSort("views")}
+            >
+              Más vistos
+            </button>
+            <button
+              className={`segmented-btn${sort === "likes" ? " segmented-btn--active" : ""}`}
+              onClick={() => setSort("likes")}
+            >
+              Más gustados
+            </button>
+          </div>
+        </div>
+      )}
 
       {loading && <p>Cargando proyectos…</p>}
       {error && <p className="form-error">{error}</p>}
@@ -80,7 +113,10 @@ export function GalleryPage() {
               <strong>{project.name}</strong>
               <p>{project.description ?? "Sin descripción"}</p>
               <small>
-                por <span className="gallery-owner">{project.owner.username}</span>
+                por{" "}
+                <Link className="gallery-owner" to={`/u/${project.owner.username}`}>
+                  {project.owner.username}
+                </Link>
                 {" · "}
                 {new Date(project.updatedAt).toLocaleDateString("es-ES")}
               </small>

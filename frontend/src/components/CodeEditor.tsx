@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 import { marked } from "marked";
 import type { ProjectFile } from "../types/projects";
 import { canFormat, formatCode } from "../utils/formatCode";
+import { useTheme } from "../context/ThemeContext";
 
 type CodeEditorProps = {
   file: ProjectFile;
@@ -14,6 +15,7 @@ const MIN_FONT = 11;
 const MAX_FONT = 22;
 
 export function CodeEditor({ file, onChange, readOnly = false }: CodeEditorProps) {
+  const { theme } = useTheme();
   const [fontSize, setFontSize] = useState(14);
   const [showPreview, setShowPreview] = useState(false);
   const [formatting, setFormatting] = useState(false);
@@ -79,7 +81,7 @@ export function CodeEditor({ file, onChange, readOnly = false }: CodeEditorProps
             height="100%"
             language={file.language}
             value={file.content}
-            theme="vs-dark"
+            theme={theme === "dark" ? "vs-dark" : "light"}
             onChange={(value) => onChange(value ?? "")}
             options={{
               minimap: { enabled: false },
