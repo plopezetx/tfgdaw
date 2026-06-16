@@ -140,4 +140,10 @@ router.put("/password", requireAuth, async (req, res) => {
   res.json({ message: "Contraseña actualizada" });
 });
 
+// DELETE /auth/me — borrar la cuenta y todos sus datos (cascada en Prisma)
+router.delete("/me", requireAuth, async (req, res) => {
+  await prisma.user.delete({ where: { id: req.user!.id } });
+  res.status(204).send();
+});
+
 export default router;

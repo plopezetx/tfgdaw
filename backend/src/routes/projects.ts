@@ -25,6 +25,7 @@ router.get("/public/gallery", async (_req, res) => {
       id: true,
       name: true,
       description: true,
+      icon: true,
       slug: true,
       views: true,
       createdAt: true,
@@ -170,6 +171,7 @@ router.get("/", async (req, res) => {
       id: true,
       name: true,
       description: true,
+      icon: true,
       isPublic: true,
       slug: true,
       views: true,
@@ -259,9 +261,10 @@ router.get("/following/feed", async (req, res) => {
 
 // POST /projects — crear proyecto nuevo
 router.post("/", async (req, res) => {
-  const { name, description } = req.body as {
+  const { name, description, icon } = req.body as {
     name?: string;
     description?: string;
+    icon?: string;
   };
 
   if (!name) {
@@ -273,6 +276,7 @@ router.post("/", async (req, res) => {
     data: {
       name,
       description,
+      icon,
       slug: createSlug(name),
       ownerId: req.user!.id,
     },
@@ -298,10 +302,11 @@ router.get("/:id", async (req, res) => {
 
 // PUT /projects/:id — actualizar metadatos del proyecto
 router.put("/:id", async (req, res) => {
-  const { name, description, isPublic } = req.body as {
+  const { name, description, isPublic, icon } = req.body as {
     name?: string;
     description?: string;
     isPublic?: boolean;
+    icon?: string | null;
   };
 
   const existing = await prisma.project.findFirst({
@@ -315,7 +320,7 @@ router.put("/:id", async (req, res) => {
 
   const updated = await prisma.project.update({
     where: { id: req.params.id },
-    data: { name, description, isPublic },
+    data: { name, description, isPublic, icon },
   });
 
   res.json(updated);

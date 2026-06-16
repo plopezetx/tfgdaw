@@ -3,6 +3,19 @@ import type { FormEvent } from "react";
 import { Link, useNavigate } from "../lib/router";
 import { useAuth } from "../context/AuthContext";
 
+const STRENGTH_LABELS = ["Muy débil", "Débil", "Media", "Buena", "Fuerte"];
+
+// Puntúa la contraseña de 0 a 4 según longitud y variedad de caracteres.
+function passwordStrength(password: string): number {
+  if (!password) return 0;
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  return score;
+}
+
 export function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -74,6 +87,26 @@ export function LoginPage() {
               required
             />
           </label>
+
+          {mode === "register" && password.length > 0 && (
+            <div className="pw-strength">
+              <div className="pw-strength-bars">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className={`pw-strength-bar${
+                      i < passwordStrength(password)
+                        ? ` pw-strength-bar--s${passwordStrength(password)}`
+                        : ""
+                    }`}
+                  />
+                ))}
+              </div>
+              <span className="pw-strength-label">
+                {STRENGTH_LABELS[passwordStrength(password)]}
+              </span>
+            </div>
+          )}
 
           {error && <div className="form-error">{error}</div>}
 

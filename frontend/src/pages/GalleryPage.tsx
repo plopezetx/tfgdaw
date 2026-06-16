@@ -110,7 +110,10 @@ export function GalleryPage() {
         {filteredProjects.map((project) => (
           <div key={project.id} className="gallery-card">
             <div className="gallery-card-body">
-              <strong>{project.name}</strong>
+              <strong>
+                {project.icon && <span className="project-icon">{project.icon}</span>}
+                {project.name}
+              </strong>
               <p>{project.description ?? "Sin descripción"}</p>
               <small>
                 por{" "}

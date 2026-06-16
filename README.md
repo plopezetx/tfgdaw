@@ -43,25 +43,31 @@ La coedición en tiempo real queda planteada como evolución futura.
 ## Funcionalidades principales
 
 - Autenticación de usuarios con registro, login, logout y JWT.
-- Gestión de cuenta: editar nombre de usuario, email y contraseña.
-- Panel de proyectos propios con creación, edición, búsqueda, duplicado y borrado.
-- IDE web con editor Monaco, árbol de archivos, pestañas y preview.
-- Gestión multiarchivo: crear, renombrar, eliminar, importar y exportar archivos.
+- Indicador de fuerza de contraseña en el registro.
+- Gestión de cuenta: editar nombre de usuario, email, contraseña y borrar la cuenta.
+- Panel de proyectos propios con creación, edición en línea, búsqueda, filtro (todos/públicos/privados), duplicado y borrado con confirmación.
+- Icono (emoji) opcional por proyecto, elegido en un pop-up al crear o al editar.
+- IDE web con editor Monaco, árbol de carpetas plegable, pestañas y preview.
+- Gestión multiarchivo en línea: crear, renombrar, eliminar, importar, exportar y descargar archivos.
+- Buscar texto en todos los archivos (Ctrl+Shift+F) y paleta de comandos (Ctrl+P).
+- Atajos de teclado: Ctrl+S guardar, Ctrl+Enter ejecutar.
+- Tour guiado la primera vez (y botón para volver a verlo).
 - Ejecución de proyectos en navegador mediante WebContainers.
 - Preview embebida, modo ampliado y terminal de logs.
 - Consola del preview para capturar `console.log` y errores del proyecto ejecutado.
 - Guardado de snapshots del proyecto y autoguardado.
 - Historial de versiones con restauración de estados anteriores.
 - Plantillas iniciales: Snake, login, lista de tareas, calculadora, reloj y lienzo.
-- Plantillas propias guardadas desde proyectos existentes.
+- Plantillas propias guardadas desde proyectos existentes (con su icono).
 - Publicación pública o privada de proyectos.
 - Galería pública con buscador, ordenación y vista pública por slug.
 - Contador de visitas, likes, favoritos y comentarios.
+- Lista de favoritos propia.
 - Fork/remix de proyectos públicos.
-- Perfil propio con estadísticas y calendario de actividad.
-- Perfil público de autor con proyectos publicados.
+- Perfil propio con avatar, estadísticas y calendario de actividad.
+- Perfil público de autor con proyectos publicados y seguidores.
 - Seguimiento de autores y feed de proyectos de usuarios seguidos.
-- Tema claro/oscuro con persistencia.
+- Tema claro/oscuro con persistencia y diseño responsive.
 - Notificaciones tipo toast.
 - Panel de IA con streaming SSE a través del backend.
 
@@ -246,7 +252,7 @@ El modelo se define con Prisma en `backend/prisma/schema.prisma`.
 | Modelo | Responsabilidad |
 |---|---|
 | `User` | Usuario registrado con email, username y contraseña hasheada |
-| `Project` | Proyecto creado por un usuario, con nombre, descripción, slug y visibilidad |
+| `Project` | Proyecto creado por un usuario: nombre, descripción, icono, slug, visibilidad y contador de visitas |
 | `ProjectSnapshot` | Estado actual de los archivos del proyecto en formato JSON |
 | `ProjectVersion` | Copias históricas de los archivos para restaurar versiones |
 | `Like` | Relación usuario-proyecto para los "me gusta" |
@@ -291,6 +297,8 @@ Puntos clave de desarrollo:
 - Hash de contraseña antes de guardar.
 - Token JWT con duración de 7 días.
 - Rutas privadas protegidas en frontend con `RequireAuth`.
+- Indicador visual de fuerza de contraseña en el registro.
+- Opción de borrar la cuenta (borra en cascada proyectos y datos asociados).
 
 ### 2. Gestión de proyectos
 
@@ -303,7 +311,9 @@ Puntos clave de desarrollo:
 - El backend filtra siempre por `ownerId` para impedir acceder a proyectos ajenos.
 - Los proyectos se ordenan por `updatedAt`.
 - La visibilidad se controla con el booleano `isPublic`.
-- La edición del nombre y descripción se persiste en la API.
+- La edición del nombre, descripción e icono se hace en línea y se persiste en la API.
+- Cada proyecto puede tener un emoji como icono, elegido en un pop-up al crear o editar.
+- La lista admite buscador y filtro por todos / públicos / privados.
 
 ### 3. IDE web
 
@@ -327,6 +337,9 @@ Puntos clave de desarrollo:
 - No se permite borrar el último archivo del proyecto.
 - Hay aviso al cerrar la pestaña si existen cambios sin guardar.
 - `Ctrl+S` guarda y `Ctrl+Enter` ejecuta.
+- `Ctrl+P` abre la paleta de comandos (abrir archivos y acciones rápidas).
+- `Ctrl+Shift+F` busca texto en todos los archivos del proyecto.
+- Un tour guiado se muestra la primera vez (con botón `?` para repetirlo).
 
 ### 4. Gestión multiarchivo
 
@@ -340,6 +353,8 @@ Puntos clave de desarrollo:
 - `projectIO.ts` gestiona importación y exportación.
 - `JSZip` empaqueta los archivos manteniendo su estructura de carpetas.
 - El explorador muestra un árbol plegable a partir de rutas planas.
+- Crear, renombrar y borrar archivos se hace en línea, sin diálogos del navegador.
+- Cada archivo se puede descargar de forma individual desde el editor.
 
 ### 5. Ejecución con WebContainers
 
@@ -519,6 +534,7 @@ Puntos clave de desarrollo:
 | `POST` | `/auth/logout` | Cerrar sesión en cliente |
 | `PUT` | `/auth/me` | Editar username y email |
 | `PUT` | `/auth/password` | Cambiar contraseña |
+| `DELETE` | `/auth/me` | Borrar la cuenta y sus datos |
 
 ### Proyectos privados
 

@@ -7,6 +7,7 @@ export type UserTemplate = {
   id: string;
   name: string;
   description: string;
+  icon: string;
   files: ProjectFile[];
 };
 
@@ -27,12 +28,14 @@ export function saveUserTemplate(
   userId: string,
   name: string,
   description: string,
+  icon: string,
   files: ProjectFile[]
 ): UserTemplate {
   const template: UserTemplate = {
     id: `ut_${Date.now()}`,
     name,
     description,
+    icon,
     files,
   };
   const next = [template, ...getUserTemplates(userId)];

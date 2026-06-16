@@ -12,6 +12,8 @@ import {
   type UserTemplate,
 } from "../data/userTemplates";
 
+const PROJECT_EMOJIS = ["📁", "🚀", "🎮", "🎨", "🧮", "🕒", "✅", "🌐", "💡", "🔥", "⚛️", "📝"];
+
 export function ProjectsPage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
@@ -28,8 +30,11 @@ export function ProjectsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [editIcon, setEditIcon] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [showIconModal, setShowIconModal] = useState(false);
   const [filter, setFilter] = useState<"all" | "public" | "private">("all");
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const [userTemplates, setUserTemplates] = useState<UserTemplate[]>(() =>
     user ? getUserTemplates(user.id) : []
   );
@@ -61,19 +66,23 @@ export function ProjectsPage() {
     return () => window.removeEventListener("click", handleClickOutside);
   }, [openMenuId]);
 
-  async function handleCreateProject(event: FormEvent<HTMLFormElement>) {
+  function handleCreateProject(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!newProjectName.trim()) return;
+    // Abre el pop-up para elegir el icono antes de crear.
+    setShowIconModal(true);
+  }
 
+  async function createWithIcon(icon?: string) {
+    setShowIconModal(false);
     setSubmitting(true);
     setError(null);
 
     try {
-      const project = await api.createProject(newProjectName.trim(), "");
+      const project = await api.createProject(newProjectName.trim(), "", icon);
       navigate(`/app/${project.id}`);
     } catch (err) {
       setError((err as Error).message ?? "Error al crear proyecto");
-    } finally {
       setSubmitting(false);
     }
   }
@@ -99,7 +108,11 @@ export function ProjectsPage() {
     setCreatingTemplate(template.id);
     setError(null);
     try {
-      const project = await api.createProject(template.name, template.description);
+      const project = await api.createProject(
+        template.name,
+        template.description,
+        template.icon
+      );
       await api.saveSnapshot(project.id, template.files);
       navigate(`/app/${project.id}`);
     } catch (err) {
@@ -117,7 +130,13 @@ export function ProjectsPage() {
         toast("El proyecto no tiene archivos para guardar", "error");
         return;
       }
-      saveUserTemplate(user.id, project.name, project.description ?? "", files);
+      saveUserTemplate(
+        user.id,
+        project.name,
+        project.description ?? "",
+        project.icon ?? "📦",
+        files
+      );
       setUserTemplates(getUserTemplates(user.id));
       toast("Guardado en Mis plantillas", "success");
     } catch (err) {
@@ -150,6 +169,7 @@ export function ProjectsPage() {
     setEditingId(project.id);
     setEditName(project.name);
     setEditDescription(project.description ?? "");
+    setEditIcon(project.icon ?? "📁");
   }
 
   function cancelEdit() {
@@ -168,6 +188,7 @@ export function ProjectsPage() {
       const updated = await api.updateProject(project.id, {
         name,
         description: editDescription.trim(),
+        icon: editIcon, // string para fijarlo, null para quitarlo
       });
       setProjects((current) =>
         current.map((p) => (p.id === updated.id ? { ...p, ...updated } : p))
@@ -214,10 +235,7 @@ export function ProjectsPage() {
   });
 
   async function handleDelete(project: api.ProjectSummary) {
-    if (!confirm(`¿Eliminar "${project.name}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
+    setConfirmingDeleteId(null);
     try {
       await api.deleteProject(project.id);
       setProjects((current) => current.filter((p) => p.id !== project.id));
@@ -298,7 +316,7 @@ export function ProjectsPage() {
                   onClick={() => handleCreateFromUserTemplate(template)}
                   disabled={creatingTemplate !== null}
                 >
-                  <span className="template-icon">📦</span>
+                  <span className="template-icon">{template.icon || "📦"}</span>
                   <span className="template-name">{template.name}</span>
                   <span className="template-desc">
                     {template.description || "Plantilla guardada"}
@@ -398,6 +416,26 @@ export function ProjectsPage() {
                     }}
                     placeholder="Descripción (opcional)"
                   />
+                  <div className="emoji-picker">
+                    <button
+                      type="button"
+                      className={`emoji-option emoji-option--none${editIcon === null ? " emoji-option--active" : ""}`}
+                      onClick={() => setEditIcon(null)}
+                      title="Sin icono"
+                    >
+                      ⊘
+                    </button>
+                    {PROJECT_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        className={`emoji-option${editIcon === emoji ? " emoji-option--active" : ""}`}
+                        onClick={() => setEditIcon(emoji)}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                   <div className="project-edit-actions">
                     <button
                       type="button"
@@ -412,6 +450,29 @@ export function ProjectsPage() {
                     </button>
                   </div>
                 </div>
+              ) : confirmingDeleteId === project.id ? (
+                <div className="project-delete-confirm">
+                  <span>
+                    ¿Eliminar <strong>{project.name}</strong>? Esta acción no se
+                    puede deshacer.
+                  </span>
+                  <div className="project-edit-actions">
+                    <button
+                      type="button"
+                      className="delete-button"
+                      onClick={() => handleDelete(project)}
+                    >
+                      Sí, eliminar
+                    </button>
+                    <button
+                      type="button"
+                      className="action-button"
+                      onClick={() => setConfirmingDeleteId(null)}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
               ) : (
                 <>
                   <div>
@@ -420,6 +481,7 @@ export function ProjectsPage() {
                       title="Haz clic para renombrar"
                       onClick={() => startEdit(project)}
                     >
+                      {project.icon && <span className="project-icon">{project.icon}</span>}
                       {project.name}
                     </strong>
                     <p>{project.description || "Sin descripción"}</p>
@@ -486,7 +548,7 @@ export function ProjectsPage() {
                             className="card-menu-danger"
                             onClick={() => {
                               setOpenMenuId(null);
-                              handleDelete(project);
+                              setConfirmingDeleteId(project.id);
                             }}
                           >
                             Eliminar
@@ -501,6 +563,47 @@ export function ProjectsPage() {
           ))}
         </ul>
       </section>
+
+      {showIconModal && (
+        <div className="modal-overlay" onClick={() => setShowIconModal(false)}>
+          <div className="modal modal--icons" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h2>Elige un icono</h2>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setShowIconModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <p className="icon-modal-sub">
+              Para el proyecto «{newProjectName.trim()}»
+            </p>
+            <div className="icon-modal-grid">
+              {PROJECT_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  className="icon-modal-emoji"
+                  onClick={() => createWithIcon(emoji)}
+                  disabled={submitting}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="icon-modal-skip"
+              onClick={() => createWithIcon()}
+              disabled={submitting}
+            >
+              Crear sin icono
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

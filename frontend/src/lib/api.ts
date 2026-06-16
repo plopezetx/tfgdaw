@@ -13,6 +13,7 @@ export type ProjectSummary = {
   id: string;
   name: string;
   description: string | null;
+  icon?: string | null;
   isPublic: boolean;
   slug: string;
   views?: number;
@@ -58,6 +59,7 @@ export type GalleryProject = {
   id: string;
   name: string;
   description: string | null;
+  icon?: string | null;
   slug: string;
   views: number;
   likeCount: number;
@@ -148,11 +150,12 @@ export async function getProjects(): Promise<ProjectSummary[]> {
 
 export async function createProject(
   name: string,
-  description = ""
+  description = "",
+  icon?: string
 ): Promise<ProjectSummary> {
   return request<ProjectSummary>("/projects", {
     method: "POST",
-    body: JSON.stringify({ name, description }),
+    body: JSON.stringify({ name, description, icon }),
   });
 }
 
@@ -174,7 +177,7 @@ export async function saveSnapshot(
 
 export async function updateProject(
   projectId: string,
-  data: Partial<Pick<ProjectSummary, "name" | "description" | "isPublic">>
+  data: Partial<Pick<ProjectSummary, "name" | "description" | "isPublic" | "icon">>
 ): Promise<ProjectSummary> {
   return request<ProjectSummary>(`/projects/${projectId}`, {
     method: "PUT",
@@ -295,6 +298,10 @@ export async function changePassword(
     method: "PUT",
     body: JSON.stringify({ currentPassword, newPassword }),
   });
+}
+
+export async function deleteAccount(): Promise<void> {
+  return request<void>("/auth/me", { method: "DELETE" });
 }
 
 // ─── Historial de versiones ─────────────────────────────────────────────────

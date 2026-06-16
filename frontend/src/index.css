@@ -233,6 +233,39 @@ button:disabled {
   padding: 8px 12px;
 }
 
+/* Indicador de fuerza de contraseña */
+.pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: -6px;
+}
+
+.pw-strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.pw-strength-bar {
+  height: 5px;
+  flex: 1;
+  border-radius: 3px;
+  background: var(--border-2);
+  transition: background 0.2s;
+}
+
+.pw-strength-bar--s1 { background: #ef4444; }
+.pw-strength-bar--s2 { background: #f59e0b; }
+.pw-strength-bar--s3 { background: #84cc16; }
+.pw-strength-bar--s4 { background: #22c55e; }
+
+.pw-strength-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 56px;
+}
+
 /* ─── Projects page ──────────────────────────────────────────────────────── */
 
 .page-shell {
@@ -418,6 +451,138 @@ button:disabled {
 .project-edit-actions {
   display: flex;
   gap: 8px;
+}
+
+/* Pop-up de selección de icono al crear proyecto */
+.modal--icons {
+  max-width: 360px;
+}
+
+.icon-modal-sub {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.icon-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.icon-modal-emoji {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.12s, background 0.12s;
+}
+
+.icon-modal-emoji:hover {
+  background: rgba(59, 130, 246, 0.18);
+  transform: scale(1.12);
+}
+
+.icon-modal-skip {
+  margin-top: 14px;
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  padding: 9px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.icon-modal-skip:hover {
+  color: var(--text);
+  border-color: var(--text-dim);
+}
+
+/* Selector de emoji en línea (edición de proyecto) */
+.emoji-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.emoji-field-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.emoji-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.emoji-option {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.emoji-option:hover {
+  transform: scale(1.12);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.emoji-option--active {
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.emoji-option--none {
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+.project-icon {
+  margin-right: 6px;
+}
+
+.project-delete-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.project-delete-confirm > span {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.danger-zone {
+  border-color: #7f1d1d;
+}
+
+.danger-zone h2 {
+  color: #f87171;
+}
+
+.danger-confirm p {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 12px;
+}
+
+.project-delete-confirm strong {
+  color: var(--text);
 }
 
 .project-card strong {
@@ -1733,11 +1898,111 @@ button:disabled {
   animation: fadeInUp 0.2s ease-out;
 }
 
+.modal--wide {
+  max-width: 640px;
+}
+
+.modal--palette {
+  max-width: 560px;
+  padding: 12px;
+}
+
 .modal-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 14px;
+}
+
+/* Buscar en archivos */
+.search-modal-input {
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.search-results {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.search-count {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin: 0 0 4px;
+}
+
+.search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.search-result:hover {
+  border-color: #3b82f6;
+}
+
+.search-result-path {
+  font-size: 11px;
+  color: #60a5fa;
+}
+
+.search-result-text {
+  font-size: 12px;
+  font-family: Consolas, Monaco, monospace;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Paleta de comandos */
+.palette-list {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 8px;
+  max-height: 50vh;
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  padding: 9px 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.palette-item--active {
+  background: #2563eb;
+  color: white;
+}
+
+.palette-label {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-hint {
+  font-size: 11px;
+  opacity: 0.7;
+  flex-shrink: 0;
 }
 
 .modal-head h2 {
@@ -2233,6 +2498,66 @@ button:disabled {
 .segmented-btn--active {
   background: #2563eb;
   color: white;
+}
+
+/* ─── Tour guiado ────────────────────────────────────────────────────────── */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+}
+
+.tour-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  pointer-events: none;
+}
+
+.tour-highlight {
+  position: fixed;
+  border: 2px solid #3b82f6;
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.35), 0 0 24px rgba(59, 130, 246, 0.5);
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.tour-tooltip {
+  position: fixed;
+  width: 300px;
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.2s ease-out;
+}
+
+.tour-step-count {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.tour-tooltip h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--text-bright);
+}
+
+.tour-tooltip p {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 /* ─── Diseño responsive ──────────────────────────────────────────────────── */

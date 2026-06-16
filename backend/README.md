@@ -16,22 +16,24 @@ API Express del IDE Web Colaborativo.
 
 - Registro, login y logout.
 - Protección de rutas con JWT.
-- Editar perfil (nombre/email) y cambiar contraseña.
-- CRUD de proyectos.
+- Editar perfil (nombre/email), cambiar contraseña y borrar la cuenta.
+- CRUD de proyectos (incluye icono/emoji y contador de visitas).
 - Guardado y recuperación de snapshots.
 - Historial de versiones del proyecto (guardar y restaurar; máximo 20).
 - Publicación pública/privada.
 - Galería pública con contador de visitas y "me gusta".
 - Lectura pública por slug (suma una visita en cada apertura).
-- Perfil público de autor con sus proyectos públicos.
-- "Me gusta" en proyectos públicos (alternar y consultar estado).
+- Perfil público de autor con sus proyectos públicos y seguidores.
+- "Me gusta" y favoritos en proyectos públicos (alternar y consultar estado).
 - Comentarios en proyectos públicos (listar, crear y borrar).
+- Seguir autores y feed de proyectos de autores seguidos.
 - Fork/remix de proyectos públicos.
 - Proxy IA por streaming SSE (Groq).
 
 ### Modelos de datos (Prisma)
 
-`User`, `Project`, `ProjectSnapshot`, `Like`, `Comment` y `ProjectVersion`.
+`User`, `Project`, `ProjectSnapshot`, `ProjectVersion`, `Like`, `Comment`,
+`Favorite` y `Follow`.
 
 ## Configuración
 
@@ -103,6 +105,7 @@ curl http://localhost:3000/health
 - `POST /auth/logout`
 - `PUT /auth/me` (editar nombre/email)
 - `PUT /auth/password` (cambiar contraseña)
+- `DELETE /auth/me` (borrar la cuenta)
 
 ### Proyectos
 
@@ -129,6 +132,12 @@ curl http://localhost:3000/health
 - `POST /projects/:id/fork`
 - `GET /projects/:id/like-status`
 - `POST /projects/:id/like`
+- `GET /projects/:id/favorite-status`
+- `POST /projects/:id/favorite`
+- `GET /projects/favorites`
+- `GET /projects/following/feed`
+- `GET /projects/authors/:username/follow-status`
+- `POST /projects/authors/:username/follow`
 - `POST /projects/:id/comments`
 - `DELETE /projects/:id/comments/:commentId`
 

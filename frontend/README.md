@@ -16,21 +16,25 @@ Aplicación React del IDE Web Colaborativo.
 
 ## Funcionalidades
 
-- Login y registro.
-- Dashboard de proyectos con buscador.
-- Plantillas de inicio: juego Snake, página de login y lista de tareas.
+- Login y registro (con indicador de fuerza de contraseña).
+- Dashboard de proyectos con buscador y filtro (todos/públicos/privados).
+- Icono (emoji) por proyecto, elegido en un pop-up al crear o editar.
+- Plantillas de inicio: Snake, login, lista de tareas, calculadora, reloj y lienzo.
+- Plantillas propias guardadas desde proyectos existentes (con su icono).
 - IDE multiarchivo con explorador en árbol de carpetas plegable.
-- Crear, renombrar y eliminar archivos.
-- Importar archivos y exportar el proyecto como `.zip`.
+- Crear, renombrar y eliminar archivos en línea (sin diálogos del navegador).
+- Importar archivos, exportar el proyecto como `.zip` y descargar archivos sueltos.
 - Editor Monaco con:
   - Botón de formatear código (Prettier: HTML, CSS, JS, TS, JSON, Markdown).
   - Vista previa para archivos Markdown.
   - Barra de estado (lenguaje, líneas, caracteres) y tamaño de fuente ajustable.
   - Tema del editor sincronizado con el tema de la app (claro/oscuro).
+- Buscar en archivos (Ctrl+Shift+F) y paleta de comandos (Ctrl+P).
 - Atajos de teclado: Ctrl+S guardar, Ctrl+Enter ejecutar.
+- Tour guiado la primera vez (con botón para repetirlo).
 - Autoguardado y aviso de cambios sin guardar.
 - Renombrar el proyecto desde el IDE (clic en el nombre).
-- Editar, duplicar, publicar y eliminar proyectos (menú de acciones).
+- Editar (en línea), duplicar, publicar, guardar como plantilla y eliminar proyectos.
 - Historial de versiones: guardar y restaurar versiones del proyecto.
 - Preview con WebContainers, ampliable a pantalla completa.
 - Panel inferior con pestañas: Terminal, Consola del preview e IA.
@@ -39,11 +43,12 @@ Aplicación React del IDE Web Colaborativo.
 - Guardado de snapshots en backend.
 - Publicación pública/privada.
 - Galería pública con buscador y orden (recientes/vistos/gustados).
-- Vista pública de proyecto con "me gusta", visitas y comentarios.
+- Vista pública de proyecto con "me gusta", favoritos, visitas y comentarios.
+- Lista de favoritos y feed de autores seguidos.
 - Perfil de usuario con avatar, estadísticas y calendario de actividad.
-- Perfil de autor (`/u/:username`) con sus proyectos públicos.
-- Ajustes de cuenta: editar nombre/email y cambiar contraseña.
-- Notificaciones (toasts) y tema claro/oscuro con persistencia.
+- Perfil de autor (`/u/:username`) con sus proyectos públicos y seguir/seguidores.
+- Ajustes de cuenta: editar nombre/email, cambiar contraseña y borrar la cuenta.
+- Notificaciones (toasts), tema claro/oscuro con persistencia y diseño responsive.
 - Fork/remix.
 - Panel IA conectado al backend.
 

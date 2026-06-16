@@ -9,6 +9,9 @@ import { TerminalPanel } from "../components/TerminalPanel";
 import { AIPanel } from "../components/AIPanel";
 import { VersionsModal } from "../components/VersionsModal";
 import { PreviewConsole } from "../components/PreviewConsole";
+import { SearchInFilesModal } from "../components/SearchInFilesModal";
+import { CommandPalette } from "../components/CommandPalette";
+import { TourGuide } from "../components/TourGuide";
 import { useWebContainer } from "../hooks/useWebContainer";
 import { usePreviewConsole } from "../hooks/usePreviewConsole";
 import { initialFiles } from "../data/initialFiles";
@@ -42,6 +45,9 @@ export function IDEPage() {
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [showVersions, setShowVersions] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showPalette, setShowPalette] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const saveLabelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -106,6 +112,14 @@ export function IDEPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [dirty]);
 
+  // Tour guiado la primera vez que se abre el IDE
+  useEffect(() => {
+    if (loading) return;
+    if (localStorage.getItem("ide_web_tour_seen")) return;
+    const timer = setTimeout(() => setShowTour(true), 400);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   // Atajos de teclado: Ctrl+S guardar, Ctrl+Enter ejecutar
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -116,6 +130,14 @@ export function IDEPage() {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
         setRunKey((key) => key + 1);
+      }
+      if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "p") {
+        e.preventDefault();
+        setShowPalette(true);
+      }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        setShowSearch(true);
       }
     }
 
@@ -396,6 +418,13 @@ export function IDEPage() {
             Historial
           </button>
           <button
+            className="action-button"
+            onClick={() => setShowTour(true)}
+            title="Ver el tutorial de nuevo"
+          >
+            ?
+          </button>
+          <button
             className={`action-button${bottomPanel === "ai" ? " action-button-active" : ""}`}
             onClick={() => setBottomPanel((p) => p === "ai" ? "terminal" : "ai")}
             title="Asistente de IA"
@@ -500,6 +529,61 @@ export function IDEPage() {
             setDirty(true);
           }}
           onClose={() => setShowVersions(false)}
+        />
+      )}
+
+      {showSearch && (
+        <SearchInFilesModal
+          files={files}
+          onOpenFile={setActiveFilePath}
+          onClose={() => setShowSearch(false)}
+        />
+      )}
+
+      {showPalette && (
+        <CommandPalette
+          files={files}
+          onOpenFile={setActiveFilePath}
+          onClose={() => setShowPalette(false)}
+          commands={[
+            { label: "Ejecutar proyecto", run: () => setRunKey((k) => k + 1) },
+            { label: "Guardar proyecto", run: () => handleSave() },
+            { label: "Reset del runtime", run: () => setResetKey((c) => c + 1) },
+            { label: "Exportar como .zip", run: handleExport },
+            { label: "Historial de versiones", run: () => setShowVersions(true) },
+            { label: "Buscar en archivos", run: () => setShowSearch(true) },
+          ]}
+        />
+      )}
+
+      {showTour && (
+        <TourGuide
+          onClose={() => {
+            localStorage.setItem("ide_web_tour_seen", "1");
+            setShowTour(false);
+          }}
+          steps={[
+            {
+              selector: ".file-explorer",
+              title: "📁 Explorador de archivos",
+              text: "Crea, renombra y organiza los archivos de tu proyecto. Pulsa + para añadir uno nuevo.",
+            },
+            {
+              selector: ".editor-panel",
+              title: "✏️ Editor de código",
+              text: "Escribe aquí tu código. Atajos: Ctrl+P abre archivos rápido y Ctrl+Shift+F busca en todo el proyecto.",
+            },
+            {
+              selector: ".run-button",
+              title: "▶ Ejecutar",
+              text: "Lanza tu proyecto en el navegador con WebContainers y mira el resultado al instante.",
+            },
+            {
+              selector: ".preview-panel",
+              title: "👁 Vista previa",
+              text: "Aquí ves tu proyecto en vivo. Puedes ampliarlo a pantalla completa para verlo mejor.",
+            },
+          ]}
         />
       )}
     </main>

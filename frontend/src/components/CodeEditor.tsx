@@ -41,6 +41,18 @@ export function CodeEditor({ file, onChange, readOnly = false }: CodeEditorProps
     }
   }
 
+  function handleDownload() {
+    const blob = new Blob([file.content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = file.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="code-editor">
       <div className="panel-title code-editor-bar">
@@ -67,6 +79,14 @@ export function CodeEditor({ file, onChange, readOnly = false }: CodeEditorProps
               {formatError ? "Error de sintaxis" : formatting ? "Formateando…" : "Formatear"}
             </button>
           )}
+          <button
+            type="button"
+            className="mini-button"
+            onClick={handleDownload}
+            title="Descargar este archivo"
+          >
+            Descargar
+          </button>
         </div>
       </div>
 

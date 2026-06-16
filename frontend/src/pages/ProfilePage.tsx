@@ -7,9 +7,11 @@ import { ContributionCalendar } from "../components/ContributionCalendar";
 import * as api from "../lib/api";
 
 export function ProfilePage() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const [projects, setProjects] = useState<api.ProjectSummary[]>([]);
 
@@ -57,6 +59,19 @@ export function ProfilePage() {
       toast((err as Error).message ?? "No se pudo cambiar la contraseña", "error");
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      await api.deleteAccount();
+      toast("Cuenta eliminada", "success");
+      logout();
+      navigate("/login");
+    } catch (err) {
+      toast((err as Error).message ?? "No se pudo eliminar la cuenta", "error");
+      setDeleting(false);
     }
   }
 
@@ -174,6 +189,43 @@ export function ProfilePage() {
             {savingPassword ? "Guardando…" : "Cambiar contraseña"}
           </button>
         </form>
+      </section>
+
+      <section className="card danger-zone">
+        <h2>Zona peligrosa</h2>
+        {confirmingDelete ? (
+          <div className="danger-confirm">
+            <p>
+              Se borrará tu cuenta y <strong>todos tus proyectos</strong>. Esta
+              acción no se puede deshacer.
+            </p>
+            <div className="project-edit-actions">
+              <button
+                type="button"
+                className="delete-button"
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+              >
+                {deleting ? "Eliminando…" : "Sí, eliminar mi cuenta"}
+              </button>
+              <button
+                type="button"
+                className="action-button"
+                onClick={() => setConfirmingDelete(false)}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="delete-button"
+            onClick={() => setConfirmingDelete(true)}
+          >
+            Eliminar mi cuenta
+          </button>
+        )}
       </section>
     </main>
   );
